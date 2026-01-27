@@ -1,6 +1,5 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   DestroyRef,
   EventEmitter,
@@ -8,6 +7,7 @@ import {
   Input,
   OnChanges,
   Output,
+  signal,
   SimpleChanges,
 } from '@angular/core';
 import { ArticlesService } from '../services/articles.service';
@@ -22,13 +22,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-article-list',
   template: `
-    @if (loading === LoadingState.LOADING) {
+    @if (loading() === LoadingState.LOADING) {
       <div class="article-preview">Loading articles...</div>
     }
 
-    @if (loading === LoadingState.LOADED) {
-      @for (article of results; track article.slug) {
-        <app-article-preview [article]="article" />
+    @if (loading() === LoadingState.LOADED) {
+      @for (article of results(); track article.slug) {
+        <app-article-preview [articleInput]="article" />
       } @empty {
         <div class="article-preview empty-feed-message">
           @if (isFollowingFeed) {
@@ -42,8 +42,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
       <nav>
         <ul class="pagination">
-          @for (pageNumber of totalPages; track pageNumber) {
-            <li class="page-item" [ngClass]="{ active: pageNumber === page }">
+          @for (pageNumber of totalPages(); track pageNumber) {
+            <li class="page-item" [ngClass]="{ active: pageNumber === page() }">
               <button class="page-link" (click)="setPageTo(pageNumber)">
                 {{ pageNumber }}
               </button>
@@ -63,13 +63,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class ArticleListComponent implements OnChanges {
   query!: ArticleListConfig;
-  results: Article[] = [];
-  page = 1;
-  totalPages: Array<number> = [];
-  loading = LoadingState.NOT_LOADED;
+  results = signal<Article[]>([]);
+  page = signal(1);
+  totalPages = signal<number[]>([]);
+  loading = signal(LoadingState.NOT_LOADED);
   LoadingState = LoadingState;
   destroyRef = inject(DestroyRef);
-  cdr = inject(ChangeDetectorRef);
 
   @Input() limit!: number;
   @Input() config!: ArticleListConfig;
@@ -85,12 +84,12 @@ export class ArticleListComponent implements OnChanges {
       this.query = configChange.currentValue;
       // Only reset page if currentPage wasn't also provided in this change
       if (!pageChange?.currentValue) {
-        this.page = 1;
+        this.page.set(1);
       }
     }
 
     if (pageChange?.currentValue) {
-      this.page = pageChange.currentValue;
+      this.page.set(pageChange.currentValue);
     }
 
     // Run query if we have a config and either config or page changed
@@ -102,33 +101,34 @@ export class ArticleListComponent implements OnChanges {
   constructor(private articlesService: ArticlesService) {}
 
   setPageTo(pageNumber: number) {
-    if (pageNumber !== this.page) {
-      this.page = pageNumber;
+    if (pageNumber !== this.page()) {
+      this.page.set(pageNumber);
       this.pageChange.emit(pageNumber);
       this.runQuery();
     }
   }
 
   runQuery() {
-    this.loading = LoadingState.LOADING;
-    this.results = [];
+    this.loading.set(LoadingState.LOADING);
+    this.results.set([]);
 
     // Create limit and offset filter (if necessary)
     if (this.limit) {
       this.query.filters.limit = this.limit;
-      this.query.filters.offset = this.limit * (this.page - 1);
+      this.query.filters.offset = this.limit * (this.page() - 1);
     }
 
     this.articlesService
       .query(this.query)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(data => {
-        this.loading = LoadingState.LOADED;
-        this.results = data.articles;
+        this.loading.set(LoadingState.LOADED);
+        this.results.set(data.articles);
 
         // Used from http://www.jstips.co/en/create-range-0...n-easily-using-one-line/
-        this.totalPages = Array.from(new Array(Math.ceil(data.articlesCount / this.limit)), (val, index) => index + 1);
-        this.cdr.markForCheck();
+        this.totalPages.set(
+          Array.from(new Array(Math.ceil(data.articlesCount / this.limit)), (val, index) => index + 1),
+        );
       });
   }
 }

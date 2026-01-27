@@ -1,12 +1,12 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   DestroyRef,
   EventEmitter,
   inject,
   Input,
   Output,
+  signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { EMPTY, switchMap } from 'rxjs';
@@ -22,7 +22,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     <button
       class="btn btn-sm"
       [ngClass]="{
-        disabled: isSubmitting,
+        disabled: isSubmitting(),
         'btn-outline-primary': !article.favorited,
         'btn-primary': article.favorited,
       }"
@@ -36,8 +36,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class FavoriteButtonComponent {
   destroyRef = inject(DestroyRef);
-  cdr = inject(ChangeDetectorRef);
-  isSubmitting = false;
+  isSubmitting = signal(false);
 
   @Input() article!: Article;
   @Output() toggle = new EventEmitter<boolean>();
@@ -49,7 +48,7 @@ export class FavoriteButtonComponent {
   ) {}
 
   toggleFavorite(): void {
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
 
     this.userService.isAuthenticated
       .pipe(
@@ -69,13 +68,11 @@ export class FavoriteButtonComponent {
       )
       .subscribe({
         next: () => {
-          this.isSubmitting = false;
+          this.isSubmitting.set(false);
           this.toggle.emit(!this.article.favorited);
-          this.cdr.markForCheck();
         },
         error: () => {
-          this.isSubmitting = false;
-          this.cdr.markForCheck();
+          this.isSubmitting.set(false);
         },
       });
   }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { catchError, switchMap } from 'rxjs/operators';
 import { combineLatest, of, throwError } from 'rxjs';
@@ -15,10 +15,9 @@ import { FollowButtonComponent } from '../../components/follow-button.component'
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent implements OnInit {
-  profile!: Profile;
-  isUser: boolean = false;
+  profile = signal<Profile>(null!);
+  isUser = signal(false);
   destroyRef = inject(DestroyRef);
-  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -41,14 +40,12 @@ export class ProfileComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(([profile, user]) => {
-        this.profile = profile;
-        this.isUser = profile.username === user?.username;
-        this.cdr.markForCheck();
+        this.profile.set(profile);
+        this.isUser.set(profile.username === user?.username);
       });
   }
 
   onToggleFollowing(profile: Profile) {
-    this.profile = profile;
-    this.cdr.markForCheck();
+    this.profile.set(profile);
   }
 }

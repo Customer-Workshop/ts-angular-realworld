@@ -1,12 +1,12 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   DestroyRef,
   EventEmitter,
   inject,
   Input,
   Output,
+  signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { switchMap } from 'rxjs/operators';
@@ -23,7 +23,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     <button
       class="btn btn-sm action-btn"
       [ngClass]="{
-        disabled: isSubmitting,
+        disabled: isSubmitting(),
         'btn-outline-secondary': !profile.following,
         'btn-secondary': profile.following,
       }"
@@ -40,9 +40,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class FollowButtonComponent {
   @Input() profile!: Profile;
   @Output() toggle = new EventEmitter<Profile>();
-  isSubmitting = false;
+  isSubmitting = signal(false);
   destroyRef = inject(DestroyRef);
-  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly profileService: ProfileService,
@@ -51,7 +50,7 @@ export class FollowButtonComponent {
   ) {}
 
   toggleFollowing(): void {
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
 
     this.userService.isAuthenticated
       .pipe(
@@ -71,13 +70,11 @@ export class FollowButtonComponent {
       )
       .subscribe({
         next: profile => {
-          this.isSubmitting = false;
+          this.isSubmitting.set(false);
           this.toggle.emit(profile);
-          this.cdr.markForCheck();
         },
         error: () => {
-          this.isSubmitting = false;
-          this.cdr.markForCheck();
+          this.isSubmitting.set(false);
         },
       });
   }

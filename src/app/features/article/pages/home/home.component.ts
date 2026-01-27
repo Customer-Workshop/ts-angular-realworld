@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TagsService } from '../../services/tags.service';
 import { ArticleListConfig } from '../../models/article-list-config.model';
@@ -19,18 +19,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class HomeComponent implements OnInit {
-  isAuthenticated = false;
-  listConfig: ArticleListConfig = {
+  isAuthenticated = signal(false);
+  listConfig = signal<ArticleListConfig>({
     type: 'all',
     filters: {},
-  };
-  currentPage = 1;
+  });
+  currentPage = signal(1);
   tags$ = inject(TagsService)
     .getAll()
-    .pipe(tap(() => (this.tagsLoaded = true)));
-  tagsLoaded = false;
+    .pipe(tap(() => this.tagsLoaded.set(true)));
+  tagsLoaded = signal(false);
+  isFollowingFeed = signal(false);
   destroyRef = inject(DestroyRef);
-  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly router: Router,
@@ -42,7 +42,7 @@ export default class HomeComponent implements OnInit {
     combineLatest([this.userService.isAuthenticated, this.route.params, this.route.queryParams])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([isAuthenticated, params, queryParams]) => {
-        this.isAuthenticated = isAuthenticated;
+        this.isAuthenticated.set(isAuthenticated);
 
         const tag = params['tag'];
         const feed = queryParams['feed'];
@@ -66,22 +66,11 @@ export default class HomeComponent implements OnInit {
           type = 'all';
         }
 
-        this.currentPage = page;
-        this.listConfig = { type, filters };
-        this.isFollowingFeed = type === 'feed';
-        this.cdr.markForCheck();
+        this.currentPage.set(page);
+        this.listConfig.set({ type, filters });
+        this.isFollowingFeed.set(type === 'feed');
       });
   }
-
-  get isFollowingFeed(): boolean {
-    return this._isFollowingFeed;
-  }
-
-  set isFollowingFeed(value: boolean) {
-    this._isFollowingFeed = value;
-  }
-
-  private _isFollowingFeed = false;
 
   onPageChange(page: number): void {
     const queryParams: { page?: number; feed?: string } = {};

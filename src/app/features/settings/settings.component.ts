@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { User } from '../../core/auth/user.model';
@@ -33,10 +33,9 @@ export default class SettingsComponent implements OnInit {
       nonNullable: true,
     }),
   });
-  errors: Errors | null = null;
-  isSubmitting = false;
+  errors = signal<Errors | null>(null);
+  isSubmitting = signal(false);
   destroyRef = inject(DestroyRef);
-  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly router: Router,
@@ -52,7 +51,7 @@ export default class SettingsComponent implements OnInit {
   }
 
   submitForm() {
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
 
     this.userService
       .update(this.settingsForm.value)
@@ -60,9 +59,8 @@ export default class SettingsComponent implements OnInit {
       .subscribe({
         next: ({ user }) => void this.router.navigate(['/profile/', user.username]),
         error: err => {
-          this.errors = err;
-          this.isSubmitting = false;
-          this.cdr.markForCheck();
+          this.errors.set(err);
+          this.isSubmitting.set(false);
         },
       });
   }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ArticleListComponent } from '../../article/components/article-list.component';
 import { ProfileService } from '../services/profile.service';
@@ -8,15 +8,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-profile-articles',
-  template: `<app-article-list [limit]="10" [config]="articlesConfig" />`,
+  template: `@if (articlesConfig()) {
+    <app-article-list [limit]="10" [config]="articlesConfig()!" />
+  }`,
   imports: [ArticleListComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class ProfileArticlesComponent implements OnInit {
-  profile!: Profile;
-  articlesConfig!: ArticleListConfig;
+  profile = signal<Profile | null>(null);
+  articlesConfig = signal<ArticleListConfig | null>(null);
   destroyRef = inject(DestroyRef);
-  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private route: ActivatedRoute,
@@ -29,14 +30,13 @@ export default class ProfileArticlesComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (profile: Profile) => {
-          this.profile = profile;
-          this.articlesConfig = {
+          this.profile.set(profile);
+          this.articlesConfig.set({
             type: 'all',
             filters: {
-              author: this.profile.username,
+              author: profile.username,
             },
-          };
-          this.cdr.markForCheck();
+          });
         },
       });
   }
