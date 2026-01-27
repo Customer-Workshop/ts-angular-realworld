@@ -1,4 +1,13 @@
-import { ChangeDetectorRef, DestroyRef, Directive, inject, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  DestroyRef,
+  Directive,
+  inject,
+  Input,
+  OnInit,
+  TemplateRef,
+  ViewContainerRef,
+} from '@angular/core';
 import { UserService } from './services/user.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
