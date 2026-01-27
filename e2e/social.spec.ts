@@ -156,15 +156,12 @@ test.describe('Social Features', () => {
 
     // Go to profile and click Favorited tab
     await page.goto(`/profile/${user.username}`, { waitUntil: 'load' });
-    await page.waitForSelector('a:has-text("Favorited")', { timeout: 10000 });
+    await page.waitForSelector('a:has-text("Favorited")', { timeout: 3000 });
     await page.click('a:has-text("Favorited")');
 
-    // Wait for articles to load - use Playwright's built-in retry logic
-    await expect(page.locator('.article-preview').first()).toBeVisible({ timeout: 15000 });
-
-    // The favorited article should be visible (use more flexible matching)
-    const articleVisible = await page.locator('.article-preview').first().isVisible();
-    expect(articleVisible).toBe(true);
+    // Wait for URL to change then for articles to load
+    await expect(page).toHaveURL(`/profile/${user.username}/favorites`);
+    await expect(page.locator('.article-preview').first()).toBeVisible({ timeout: 3000 });
   });
 
   test('should display followed users articles in feed', async ({ page }) => {
