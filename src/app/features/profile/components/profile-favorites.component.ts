@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ArticleListComponent } from '../../article/components/article-list.component';
 import { ProfileService } from '../services/profile.service';
@@ -10,11 +10,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   selector: 'app-profile-favorites',
   template: `<app-article-list [limit]="10" [config]="favoritesConfig" />`,
   imports: [ArticleListComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class ProfileFavoritesComponent implements OnInit {
   profile!: Profile;
   favoritesConfig!: ArticleListConfig;
   destroyRef = inject(DestroyRef);
+  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private route: ActivatedRoute,
@@ -34,6 +36,7 @@ export default class ProfileFavoritesComponent implements OnInit {
               favorited: this.profile.username,
             },
           };
+          this.cdr.markForCheck();
         },
       });
   }

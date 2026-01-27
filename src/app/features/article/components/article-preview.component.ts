@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input } from '@angular/core';
 import { Article } from '../models/article.model';
 import { ArticleMetaComponent } from './article-meta.component';
 import { RouterLink } from '@angular/router';
@@ -30,8 +30,10 @@ import { FavoriteButtonComponent } from './favorite-button.component';
     </div>
   `,
   imports: [ArticleMetaComponent, FavoriteButtonComponent, RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ArticlePreviewComponent {
+  cdr = inject(ChangeDetectorRef);
   @Input() article!: Article;
 
   toggleFavorite(favorited: boolean): void {
@@ -42,5 +44,6 @@ export class ArticlePreviewComponent {
     } else {
       this.article.favoritesCount--;
     }
+    this.cdr.markForCheck();
   }
 }

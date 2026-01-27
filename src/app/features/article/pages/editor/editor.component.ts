@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
@@ -18,6 +18,7 @@ interface ArticleForm {
   selector: 'app-editor-page',
   templateUrl: './editor.component.html',
   imports: [ListErrorsComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class EditorComponent implements OnInit {
   tagList: string[] = [];
@@ -31,6 +32,7 @@ export default class EditorComponent implements OnInit {
   errors: Errors | null = null;
   isSubmitting = false;
   destroyRef = inject(DestroyRef);
+  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly articleService: ArticlesService,
@@ -47,6 +49,7 @@ export default class EditorComponent implements OnInit {
           if (user.username === article.author.username) {
             this.tagList = article.tagList;
             this.articleForm.patchValue(article);
+            this.cdr.markForCheck();
           } else {
             void this.router.navigate(['/']);
           }
@@ -59,7 +62,8 @@ export default class EditorComponent implements OnInit {
     const tag = this.tagField.value;
     // only add tag if it does not exist yet
     if (tag != null && tag.trim() !== '' && this.tagList.indexOf(tag) < 0) {
-      this.tagList.push(tag);
+      this.tagList = [...this.tagList, tag];
+      this.cdr.markForCheck();
     }
     // clear the input
     this.tagField.reset('');
@@ -89,6 +93,7 @@ export default class EditorComponent implements OnInit {
       error: err => {
         this.errors = err;
         this.isSubmitting = false;
+        this.cdr.markForCheck();
       },
     });
   }

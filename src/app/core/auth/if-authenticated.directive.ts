@@ -1,4 +1,4 @@
-import { DestroyRef, Directive, inject, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, DestroyRef, Directive, inject, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
 import { UserService } from './services/user.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -8,6 +8,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class IfAuthenticatedDirective<T> implements OnInit {
   destroyRef = inject(DestroyRef);
+  cdr = inject(ChangeDetectorRef);
   constructor(
     private templateRef: TemplateRef<T>,
     private userService: UserService,
@@ -29,6 +30,7 @@ export class IfAuthenticatedDirective<T> implements OnInit {
         this.viewContainer.clear();
         this.hasView = false;
       }
+      this.cdr.markForCheck();
     });
   }
 

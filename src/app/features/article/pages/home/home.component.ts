@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TagsService } from '../../services/tags.service';
 import { ArticleListConfig } from '../../models/article-list-config.model';
@@ -16,6 +16,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
   imports: [NgClass, ArticleListComponent, RxLet, IfAuthenticatedDirective, RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class HomeComponent implements OnInit {
   isAuthenticated = false;
@@ -29,6 +30,7 @@ export default class HomeComponent implements OnInit {
     .pipe(tap(() => (this.tagsLoaded = true)));
   tagsLoaded = false;
   destroyRef = inject(DestroyRef);
+  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly router: Router,
@@ -67,6 +69,7 @@ export default class HomeComponent implements OnInit {
         this.currentPage = page;
         this.listConfig = { type, filters };
         this.isFollowingFeed = type === 'feed';
+        this.cdr.markForCheck();
       });
   }
 

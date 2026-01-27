@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, EventEmitter, inject, Input, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
@@ -26,12 +26,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     </button>
   `,
   imports: [NgClass],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FollowButtonComponent {
   @Input() profile!: Profile;
   @Output() toggle = new EventEmitter<Profile>();
   isSubmitting = false;
   destroyRef = inject(DestroyRef);
+  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly profileService: ProfileService,
@@ -62,8 +64,12 @@ export class FollowButtonComponent {
         next: profile => {
           this.isSubmitting = false;
           this.toggle.emit(profile);
+          this.cdr.markForCheck();
         },
-        error: () => (this.isSubmitting = false),
+        error: () => {
+          this.isSubmitting = false;
+          this.cdr.markForCheck();
+        },
       });
   }
 }

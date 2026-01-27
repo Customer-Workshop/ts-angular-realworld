@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ArticlesService } from '../services/articles.service';
 import { ArticleListConfig } from '../models/article-list-config.model';
 import { Article } from '../models/article.model';
@@ -48,6 +48,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
       cursor: pointer;
     }
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ArticleListComponent implements OnChanges {
   query!: ArticleListConfig;
@@ -57,6 +58,7 @@ export class ArticleListComponent implements OnChanges {
   loading = LoadingState.NOT_LOADED;
   LoadingState = LoadingState;
   destroyRef = inject(DestroyRef);
+  cdr = inject(ChangeDetectorRef);
 
   @Input() limit!: number;
   @Input() config!: ArticleListConfig;
@@ -115,6 +117,7 @@ export class ArticleListComponent implements OnChanges {
 
         // Used from http://www.jstips.co/en/create-range-0...n-easily-using-one-line/
         this.totalPages = Array.from(new Array(Math.ceil(data.articlesCount / this.limit)), (val, index) => index + 1);
+        this.cdr.markForCheck();
       });
   }
 }

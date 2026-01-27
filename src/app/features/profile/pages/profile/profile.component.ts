@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { catchError, switchMap } from 'rxjs/operators';
 import { combineLatest, of, throwError } from 'rxjs';
@@ -12,11 +12,13 @@ import { FollowButtonComponent } from '../../components/follow-button.component'
   selector: 'app-profile-page',
   templateUrl: './profile.component.html',
   imports: [FollowButtonComponent, RouterLink, RouterLinkActive, RouterOutlet, FollowButtonComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent implements OnInit {
   profile!: Profile;
   isUser: boolean = false;
   destroyRef = inject(DestroyRef);
+  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -41,10 +43,12 @@ export class ProfileComponent implements OnInit {
       .subscribe(([profile, user]) => {
         this.profile = profile;
         this.isUser = profile.username === user?.username;
+        this.cdr.markForCheck();
       });
   }
 
   onToggleFollowing(profile: Profile) {
     this.profile = profile;
+    this.cdr.markForCheck();
   }
 }

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { User } from '../../core/auth/user.model';
@@ -19,6 +19,7 @@ interface SettingsForm {
   selector: 'app-settings-page',
   templateUrl: './settings.component.html',
   imports: [ListErrorsComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class SettingsComponent implements OnInit {
   user!: User;
@@ -35,6 +36,7 @@ export default class SettingsComponent implements OnInit {
   errors: Errors | null = null;
   isSubmitting = false;
   destroyRef = inject(DestroyRef);
+  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly router: Router,
@@ -60,6 +62,7 @@ export default class SettingsComponent implements OnInit {
         error: err => {
           this.errors = err;
           this.isSubmitting = false;
+          this.cdr.markForCheck();
         },
       });
   }

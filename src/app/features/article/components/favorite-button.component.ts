@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, EventEmitter, inject, Input, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { EMPTY, switchMap } from 'rxjs';
 import { NgClass } from '@angular/common';
@@ -23,9 +23,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     </button>
   `,
   imports: [NgClass],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FavoriteButtonComponent {
   destroyRef = inject(DestroyRef);
+  cdr = inject(ChangeDetectorRef);
   isSubmitting = false;
 
   @Input() article!: Article;
@@ -60,8 +62,12 @@ export class FavoriteButtonComponent {
         next: () => {
           this.isSubmitting = false;
           this.toggle.emit(!this.article.favorited);
+          this.cdr.markForCheck();
         },
-        error: () => (this.isSubmitting = false),
+        error: () => {
+          this.isSubmitting = false;
+          this.cdr.markForCheck();
+        },
       });
   }
 }

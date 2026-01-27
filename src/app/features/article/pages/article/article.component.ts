@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from '../../../../core/auth/user.model';
@@ -38,6 +38,7 @@ import { FollowButtonComponent } from '../../../profile/components/follow-button
     ReactiveFormsModule,
     IfAuthenticatedDirective,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class ArticleComponent implements OnInit {
   article!: Article;
@@ -51,6 +52,7 @@ export default class ArticleComponent implements OnInit {
   isSubmitting = false;
   isDeleting = false;
   destroyRef = inject(DestroyRef);
+  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -75,6 +77,7 @@ export default class ArticleComponent implements OnInit {
         this.comments = comments;
         this.currentUser = currentUser;
         this.canModify = currentUser?.username === article.author.username;
+        this.cdr.markForCheck();
       });
   }
 
@@ -112,13 +115,15 @@ export default class ArticleComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: comment => {
-          this.comments.unshift(comment);
+          this.comments = [comment, ...this.comments];
           this.commentControl.reset('');
           this.isSubmitting = false;
+          this.cdr.markForCheck();
         },
         error: errors => {
           this.isSubmitting = false;
           this.commentFormErrors = errors;
+          this.cdr.markForCheck();
         },
       });
   }
@@ -129,6 +134,7 @@ export default class ArticleComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.comments = this.comments.filter(item => item !== comment);
+        this.cdr.markForCheck();
       });
   }
 }

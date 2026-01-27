@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { Validators, FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ListErrorsComponent } from '../../shared/components/list-errors.component';
@@ -16,6 +16,7 @@ interface AuthForm {
   selector: 'app-auth-page',
   templateUrl: './auth.component.html',
   imports: [RouterLink, ListErrorsComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class AuthComponent implements OnInit {
   authType = '';
@@ -24,6 +25,7 @@ export default class AuthComponent implements OnInit {
   isSubmitting = false;
   authForm: FormGroup<AuthForm>;
   destroyRef = inject(DestroyRef);
+  cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -76,6 +78,7 @@ export default class AuthComponent implements OnInit {
       error: err => {
         this.errors = err;
         this.isSubmitting = false;
+        this.cdr.markForCheck();
       },
     });
   }
