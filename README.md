@@ -55,6 +55,7 @@ The example application is a social blogging site (i.e. a Medium.com clone) call
   - List of articles populated from author's created articles or author's favorited articles
 
 ## Realworld Angular
+
 This project may be too simple for getting a good understanding of the different ways an Angular project can be built.
 For a comprehensive understanding of how more complex Angular projects can be implemented, you may check the [
 RealWorld Angular](https://github.com/realworld-angular) organization that is specialized in Angular development, currently managed by [Gerome Grignon](https://github.com/geromegrignon).
