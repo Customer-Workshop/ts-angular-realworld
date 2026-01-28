@@ -1,19 +1,14 @@
-[![RealWorld Frontend](https://img.shields.io/badge/realworld-frontend-%23783578.svg)](https://realworld.show)
-[![Build Status](https://travis-ci.org/gothinkster/angular-realworld-example-app.svg?branch=master)](https://travis-ci.org/gothinkster/angular-realworld-example-app)
-
 # ![Angular Example App](logo.png)
 
-> ### Angular codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld-example-apps) spec and API.
+> ### Angular codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://realworld.show) spec and API.
 
-### [RealWorld](https://github.com/gothinkster/realworld)
+### [RealWorld](https://realworld.show)
 
-This codebase was created to demonstrate a fully fledged application built with Angular that interacts with an actual backend server including CRUD operations, authentication, routing, pagination, and more. We've gone to great lengths to adhere to the [Angular Styleguide](https://angular.io/styleguide) & best practices.
-
-Additionally, there is an Angular 1.5 version of this codebase that you can [fork](https://github.com/gothinkster/angularjs-realworld-example-app) and/or [learn how to recreate](https://thinkster.io/angularjs-es6-tutorial).
+This codebase was created to demonstrate a fully fledged application built with Angular that interacts with an actual backend server including CRUD operations, authentication, routing, pagination, and more. We've gone to great lengths to adhere to the [Angular Styleguide](https://angular.dev/style-guide) & best practices.
 
 # How it works
 
-We're currently working on some docs for the codebase (explaining where functionality is located, how it works, etc) but the codebase should be straightforward to follow as is. We've also released a [step-by-step tutorial w/ screencasts](https://thinkster.io/tutorials/building-real-world-angular-2-apps) that teaches you how to recreate the codebase from scratch.
+A global documentation for the project is available at [docs.realworld.show](https://docs.realworld.show/introduction/).
 
 # Getting started
 
@@ -27,7 +22,7 @@ Run `ng build` to build the project. The build artifacts will be stored in the `
 
 ## Functionality overview
 
-The example application is a social blogging site (i.e. a Medium.com clone) called "Conduit". It uses a custom API for all requests, including authentication. You can view a live demo over at https://demo.realworld.show
+The example application is a social blogging site (i.e. a Medium.com clone) called "Conduit". It uses a custom API for all requests, including authentication. You can view a live demo over at [demo.realworld.show](https://demo.realworld.show)
 
 **General functionality:**
 
@@ -41,20 +36,30 @@ The example application is a social blogging site (i.e. a Medium.com clone) call
 
 **The general page breakdown looks like this:**
 
-- Home page (URL: /#/ )
+- Home page (URL: / )
   - List of tags
   - List of articles pulled from either Feed, Global, or by Tag
   - Pagination for list of articles
-- Sign in/Sign up pages (URL: /#/login, /#/register )
+- Sign in/Sign up pages (URL: /login, /register )
   - Uses JWT (store the token in localStorage)
   - Authentication can be easily switched to session/cookie based
-- Settings page (URL: /#/settings )
-- Editor page to create/edit articles (URL: /#/editor, /#/editor/article-slug-here )
-- Article page (URL: /#/article/article-slug-here )
+- Settings page (URL: /settings )
+- Editor page to create/edit articles (URL: /editor, /editor/article-slug-here )
+- Article page (URL: /article/article-slug-here )
   - Delete article button (only shown to article's author)
   - Render markdown from server client side
   - Comments section at bottom of page
   - Delete comment button (only shown to comment's author)
-- Profile page (URL: /#/profile/:username, /#/profile/:username/favorites )
+- Profile page (URL: /profile/:username, /profile/:username/favorites )
   - Show basic user info
   - List of articles populated from author's created articles or author's favorited articles
+
+## Realworld Angular
+This project may be too simple for getting a good understanding of the different ways an Angular project can be built.
+For a comprehensive understanding of how more complex Angular projects can be implemented, you may check the [
+RealWorld Angular](https://github.com/realworld-angular) organization that is specialized in Angular development, currently managed by [Gerome Grignon](https://github.com/geromegrignon).
+
+## License
+
+- **Project code**: [MIT License](LICENSE)
+- **Angular logo**: The Angular logo is a trademark of Google LLC, used here to indicate this project is built with Angular. This project is not officially affiliated with or endorsed by Google. See [Angular's press kit](https://angular.dev/press-kit) for brand guidelines.
