@@ -81,4 +81,20 @@ test.describe('Authentication', () => {
     // Should still be logged in
     await expect(page.locator(`a[href="/profile/${user.username}"]`)).toBeVisible();
   });
+
+  test('should handle invalid token on page reload gracefully', async ({ page }) => {
+    // Set an invalid token in localStorage before navigating
+    await page.goto('/');
+    await page.evaluate(() => {
+      localStorage.setItem('jwtToken', 'invalid-token-that-will-cause-401');
+    });
+    // Reload the page - this should NOT cause a blank screen
+    await page.reload();
+    // The app should still load and show the unauthenticated UI
+    await expect(page.locator('a[href="/login"]')).toBeVisible();
+    await expect(page.locator('a[href="/register"]')).toBeVisible();
+    // The invalid token should be cleared
+    const token = await page.evaluate(() => localStorage.getItem('jwtToken'));
+    expect(token).toBeNull();
+  });
 });
