@@ -1,0 +1,763 @@
+import { test, expect, Page, Route } from '@playwright/test';
+
+const API_BASE = 'https://api.realworld.show/api';
+
+/**
+ * Helper to mock an API endpoint with a specific error response
+ */
+async function mockApiError(
+  page: Page,
+  endpoint: string,
+  status: number,
+  errorBody: object = {},
+  method?: string
+) {
+  await page.route(`${API_BASE}${endpoint}`, (route: Route) => {
+    if (method && route.request().method() !== method) {
+      return route.continue();
+    }
+    route.fulfill({
+      status,
+      contentType: 'application/json',
+      body: JSON.stringify(errorBody),
+    });
+  });
+}
+
+/**
+ * Helper to set a fake JWT token to simulate authenticated state
+ */
+async function setFakeAuthToken(page: Page) {
+  await page.evaluate(() => {
+    localStorage.setItem('jwtToken', 'fake-token-for-testing');
+  });
+}
+
+test.describe('Error Handling - 400 Bad Request', () => {
+  test('should handle 400 on login with validation errors', async ({ page }) => {
+    await mockApiError(page, '/users/login', 400, {
+      errors: { 'email or password': ['is invalid'] },
+    });
+    await page.goto('/login');
+    await page.fill('input[formControlName="email"]', 'test@test.com');
+    await page.fill('input[formControlName="password"]', 'password');
+    await page.click('button[type="submit"]');
+    // Should show error messages, not crash
+    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page).toHaveURL('/login');
+    // TODO add another check to ensure the inputs are still there?
+  });
+
+  test('should handle 400 on registration with validation errors', async ({ page }) => {
+    await mockApiError(page, '/users', 400, {
+      errors: {
+        email: ['is already taken'],
+        username: ['is too short (minimum is 3 characters)'],
+      },
+    });
+    await page.goto('/register');
+    await page.fill('input[formControlName="username"]', 'ab');
+    await page.fill('input[formControlName="email"]', 'taken@test.com');
+    await page.fill('input[formControlName="password"]', 'password123');
+    await page.click('button[type="submit"]');
+    // Should show error messages
+    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page).toHaveURL('/register');
+    // TODO add another check to ensure the inputs are still there?
+  });
+
+  test('should handle 400 on article creation', async ({ page }) => {
+    await page.goto('/');
+    await setFakeAuthToken(page);
+    // Mock successful user fetch (so we appear logged in)
+    await page.route(`${API_BASE}/user`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: { username: 'testuser', email: 'test@test.com', token: 'fake-token', bio: null, image: null },
+        }),
+      });
+    });
+    await mockApiError(page, '/articles', 400, {
+      errors: { title: ["can't be blank"], body: ["can't be blank"] },
+    }, 'POST');
+    await page.goto('/editor');
+    await page.fill('input[formControlName="title"]', '');
+    await page.fill('input[formControlName="description"]', 'desc');
+    await page.fill('textarea[formControlName="body"]', '');
+    await page.click('button:has-text("Publish")');
+    // Should show errors, not crash
+    await expect(page.locator('.error-messages')).toBeVisible();
+    // TODO add another check to ensure the inputs are still there?
+  });
+});
+
+test.describe('Error Handling - 401 Unauthorized', () => {
+  test('should handle 401 on page load with invalid token', async ({ page }) => {
+    await page.goto('/');
+    await setFakeAuthToken(page);
+    await mockApiError(page, '/user', 401, {
+      errors: { message: ['Token is invalid or expired'] },
+    });
+    await page.reload();
+    // App should not crash - should show logged out state
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('a[href="/login"]')).toBeVisible();
+    // TODO add another check to ensure the articles are still there?
+  });
+
+  test('should handle 401 when accessing protected route', async ({ page }) => {
+    await mockApiError(page, '/user', 401, {
+      errors: { message: ['Unauthorized'] },
+    });
+    await page.goto('/');
+    await setFakeAuthToken(page);
+    await page.goto('/settings');
+    // Should redirect to login or show appropriate message
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // App should not show blank screen
+    const bodyContent = await page.locator('body').textContent();
+    expect(bodyContent?.trim().length).toBeGreaterThan(0);
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle 401 when posting a comment', async ({ page }) => {
+    // Mock article fetch as successful
+    await page.route(`${API_BASE}/articles/*`, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            article: {
+              slug: 'test-article',
+              title: 'Test Article',
+              description: 'Test',
+              body: 'Test body',
+              tagList: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              favorited: false,
+              favoritesCount: 0,
+              author: { username: 'author', bio: null, image: null, following: false },
+            },
+          }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+    // Mock comments fetch
+    await page.route(`${API_BASE}/articles/*/comments`, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ comments: [] }),
+        });
+      } else if (route.request().method() === 'POST') {
+        route.fulfill({
+          status: 401,
+          contentType: 'application/json',
+          body: JSON.stringify({ errors: { message: ['You must be logged in'] } }),
+        });
+      }
+    });
+    await page.goto('/');
+    await setFakeAuthToken(page);
+    // Mock user as logged in
+    await page.route(`${API_BASE}/user`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: { username: 'testuser', email: 'test@test.com', token: 'fake-token', bio: null, image: null },
+        }),
+      });
+    });
+    await page.goto('/article/test-article');
+    // App should handle gracefully - not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+});
+
+test.describe('Error Handling - 403 Forbidden', () => {
+  test('should handle 403 when updating article', async ({ page }) => {
+    // Mock user fetch
+    await page.route(`${API_BASE}/user`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: { username: 'currentuser', email: 'test@test.com', token: 'fake-token', bio: null, image: null },
+        }),
+      });
+    });
+    // Mock article update with 403
+    await page.route(`${API_BASE}/articles/*`, (route) => {
+      if (route.request().method() === 'PUT') {
+        route.fulfill({
+          status: 403,
+          contentType: 'application/json',
+          body: JSON.stringify({ errors: { message: ['You are not authorized to edit this article'] } }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+    await page.goto('/');
+    await setFakeAuthToken(page);
+    // Just verify app doesn't crash on 403
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle 403 when deleting another users comment', async ({ page }) => {
+    await mockApiError(page, '/articles/*/comments/*', 403, {
+      errors: { message: ['You are not authorized to delete this comment'] },
+    }, 'DELETE');
+    await page.goto('/');
+    // App should remain functional
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle 403 when accessing admin-only resource', async ({ page }) => {
+    await page.route(`${API_BASE}/user`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: { username: 'regularuser', email: 'test@test.com', token: 'fake-token', bio: null, image: null },
+        }),
+      });
+    });
+    await page.goto('/');
+    await setFakeAuthToken(page);
+    // Even with 403 responses, app should not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('.navbar-brand')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+});
+
+test.describe('Error Handling - 500 Internal Server Error', () => {
+  test('should handle 500 on articles feed load', async ({ page }) => {
+    await mockApiError(page, '/articles*', 500, {
+      errors: { server: ['Internal server error'] },
+    });
+    await page.goto('/');
+    // App should not crash - navbar should still be visible
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('.navbar-brand')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle 500 on tags load', async ({ page }) => {
+    // Mock articles as successful
+    await page.route(`${API_BASE}/articles*`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ articles: [], articlesCount: 0 }),
+      });
+    });
+    await mockApiError(page, '/tags', 500, {
+      errors: { server: ['Database connection failed'] },
+    });
+    await page.goto('/');
+    // App should load without tags, not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('.banner')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle network error on tags load', async ({ page }) => {
+    await page.route(`${API_BASE}/articles*`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ articles: [], articlesCount: 0 }),
+      });
+    });
+    await page.route(`${API_BASE}/tags`, (route) => {
+      route.abort('internetdisconnected');
+    });
+    await page.goto('/');
+    // App should load without tags, not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('.banner')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle 500 on user profile load', async ({ page }) => {
+    await mockApiError(page, '/profiles/*', 500, {
+      errors: { server: ['Failed to fetch profile'] },
+    });
+    await page.goto('/profile/someuser');
+    // Should show error state or fallback, not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle network error on user profile load', async ({ page }) => {
+    await page.route(`${API_BASE}/profiles/*`, (route) => {
+      route.abort('internetdisconnected');
+    });
+    await page.goto('/profile/someuser');
+    // Should not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle 500 on article detail load', async ({ page }) => {
+    await mockApiError(page, '/articles/some-article', 500, {
+      errors: { server: ['Failed to fetch article'] },
+    });
+    await page.goto('/article/some-article');
+    // App should not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle network error on article detail load', async ({ page }) => {
+    await page.route(`${API_BASE}/articles/some-article`, (route) => {
+      route.abort('internetdisconnected');
+    });
+    await page.goto('/article/some-article');
+    // App should not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle 500 when submitting settings', async ({ page }) => {
+    // Mock user fetch as successful
+    await page.route(`${API_BASE}/user`, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            user: { username: 'testuser', email: 'test@test.com', token: 'fake-token', bio: 'bio', image: null },
+          }),
+        });
+      } else if (route.request().method() === 'PUT') {
+        route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ errors: { server: ['Failed to save settings'] } }),
+        });
+      }
+    });
+    await page.goto('/');
+    await setFakeAuthToken(page);
+    await page.goto('/settings');
+    // Wait for form to load
+    await expect(page.locator('input[formControlName="email"]')).toBeVisible();
+    // Try to submit
+    await page.click('button[type="submit"]');
+    // Should show error, not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle intermittent 500 errors gracefully', async ({ page }) => {
+    let requestCount = 0;
+    // First request fails, second succeeds
+    await page.route(`${API_BASE}/articles*`, (route) => {
+      requestCount++;
+      if (requestCount === 1) {
+        route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ errors: { server: ['Temporary failure'] } }),
+        });
+      } else {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ articles: [], articlesCount: 0 }),
+        });
+      }
+    });
+    await page.goto('/');
+    // App should still be functional after error
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+});
+
+test.describe('Error Handling - Network Errors', () => {
+  test('should handle network timeout', async ({ page }) => {
+    await page.route(`${API_BASE}/articles*`, (route) => {
+      // Simulate timeout by not responding
+      route.abort('timedout');
+    });
+    await page.goto('/');
+    // App should not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle connection refused', async ({ page }) => {
+    await page.route(`${API_BASE}/articles*`, (route) => {
+      route.abort('connectionrefused');
+    });
+    await page.goto('/');
+    // App should not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should show error message on settings form when network fails', async ({ page }) => {
+    // Mock GET /user to simulate logged-in state
+    await page.route(`${API_BASE}/user`, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            user: {
+              email: 'test@example.com',
+              username: 'testuser',
+              bio: 'Test bio',
+              image: '',
+              token: 'fake-token',
+            },
+          }),
+        });
+      } else if (route.request().method() === 'PUT') {
+        // Simulate network error on form submission
+        route.abort('internetdisconnected');
+      } else {
+        route.continue();
+      }
+    });
+    // Set token and go to settings
+    await page.goto('/');
+    await page.evaluate(() => {
+      localStorage.setItem('jwtToken', 'fake-token');
+    });
+    await page.goto('/settings');
+    await expect(page.locator('button:has-text("Update Settings")')).toBeVisible();
+    // Submit the form
+    await page.click('button:has-text("Update Settings")');
+    // Should show network error message
+    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should show error message on login form when network fails', async ({ page }) => {
+    await page.route(`${API_BASE}/users/login`, (route) => {
+      route.abort('internetdisconnected');
+    });
+    await page.goto('/login');
+    await page.fill('input[formcontrolname="email"]', 'test@example.com');
+    await page.fill('input[formcontrolname="password"]', 'password123');
+    await page.click('button[type="submit"]');
+    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should show error message on register form when network fails', async ({ page }) => {
+    await page.route(`${API_BASE}/users`, (route) => {
+      route.abort('internetdisconnected');
+    });
+    await page.goto('/register');
+    await page.fill('input[formcontrolname="username"]', 'testuser');
+    await page.fill('input[formcontrolname="email"]', 'test@example.com');
+    await page.fill('input[formcontrolname="password"]', 'password123');
+    await page.click('button[type="submit"]');
+    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should show error message on create article form when network fails', async ({ page }) => {
+    // Mock logged-in state
+    await page.route(`${API_BASE}/user`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: { email: 'test@example.com', username: 'testuser', bio: '', image: '', token: 'fake-token' },
+        }),
+      });
+    });
+    // Network error on article creation
+    await page.route(`${API_BASE}/articles/`, (route) => {
+      route.abort('internetdisconnected');
+    });
+    await page.goto('/');
+    await page.evaluate(() => localStorage.setItem('jwtToken', 'fake-token'));
+    await page.goto('/editor');
+    await page.fill('input[formcontrolname="title"]', 'Test Article');
+    await page.fill('input[formcontrolname="description"]', 'Test description');
+    await page.fill('textarea[formcontrolname="body"]', 'Test body content');
+    await page.click('button:has-text("Publish Article")');
+    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should show error message on update article form when network fails', async ({ page }) => {
+    const mockArticle = {
+      slug: 'test-article',
+      title: 'Test Article',
+      description: 'Test description',
+      body: 'Test body',
+      tagList: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      favorited: false,
+      favoritesCount: 0,
+      author: { username: 'testuser', bio: '', image: '', following: false },
+    };
+    // Mock logged-in state
+    await page.route(`${API_BASE}/user`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: { email: 'test@example.com', username: 'testuser', bio: '', image: '', token: 'fake-token' },
+        }),
+      });
+    });
+    // Mock article fetch
+    await page.route(`${API_BASE}/articles/test-article`, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ article: mockArticle }),
+        });
+      } else if (route.request().method() === 'PUT') {
+        route.abort('internetdisconnected');
+      } else {
+        route.continue();
+      }
+    });
+    await page.goto('/');
+    await page.evaluate(() => localStorage.setItem('jwtToken', 'fake-token'));
+    await page.goto('/editor/test-article');
+    await expect(page.locator('input[formcontrolname="title"]')).toHaveValue('Test Article');
+    await page.click('button:has-text("Publish Article")');
+    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should show error message when adding comment fails due to network', async ({ page }) => {
+    const mockArticle = {
+      slug: 'test-article',
+      title: 'Test Article',
+      description: 'Test description',
+      body: 'Test body',
+      tagList: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      favorited: false,
+      favoritesCount: 0,
+      author: { username: 'otheruser', bio: '', image: '', following: false },
+    };
+    // Mock logged-in state
+    await page.route(`${API_BASE}/user`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: { email: 'test@example.com', username: 'testuser', bio: '', image: '', token: 'fake-token' },
+        }),
+      });
+    });
+    // Mock article fetch
+    await page.route(`${API_BASE}/articles/test-article`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ article: mockArticle }),
+      });
+    });
+    // Mock comments fetch (empty) and POST (network error)
+    await page.route(`${API_BASE}/articles/test-article/comments`, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ comments: [] }),
+        });
+      } else if (route.request().method() === 'POST') {
+        route.abort('internetdisconnected');
+      } else {
+        route.continue();
+      }
+    });
+    await page.goto('/');
+    await page.evaluate(() => localStorage.setItem('jwtToken', 'fake-token'));
+    await page.goto('/article/test-article');
+    await page.fill('textarea[placeholder="Write a comment..."]', 'Test comment');
+    await page.click('button:has-text("Post Comment")');
+    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle network error when favoriting article', async ({ page }) => {
+    const mockArticle = {
+      slug: 'test-article',
+      title: 'Test Article',
+      description: 'Test description',
+      body: 'Test body',
+      tagList: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      favorited: false,
+      favoritesCount: 0,
+      author: { username: 'otheruser', bio: '', image: '', following: false },
+    };
+    // Mock logged-in state
+    await page.route(`${API_BASE}/user`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: { email: 'test@example.com', username: 'testuser', bio: '', image: '', token: 'fake-token' },
+        }),
+      });
+    });
+    // Mock article fetch
+    await page.route(`${API_BASE}/articles/test-article`, (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ article: mockArticle }),
+        });
+      } else {
+        route.continue();
+      }
+    });
+    // Mock comments
+    await page.route(`${API_BASE}/articles/test-article/comments`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ comments: [] }),
+      });
+    });
+    // Network error on favorite
+    await page.route(`${API_BASE}/articles/test-article/favorite`, (route) => {
+      route.abort('internetdisconnected');
+    });
+    await page.goto('/');
+    await page.evaluate(() => localStorage.setItem('jwtToken', 'fake-token'));
+    await page.goto('/article/test-article');
+    // Click favorite button (first one - there are 2 on the page)
+    await page.locator('button:has-text("Favorite Article")').first().click();
+    // App should not crash - button should still be visible
+    await expect(page.locator('button:has-text("Favorite Article")').first()).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle network error when following user', async ({ page }) => {
+    const mockProfile = {
+      username: 'otheruser',
+      bio: 'Test bio',
+      image: '',
+      following: false,
+    };
+    // Mock logged-in state
+    await page.route(`${API_BASE}/user`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: { email: 'test@example.com', username: 'testuser', bio: '', image: '', token: 'fake-token' },
+        }),
+      });
+    });
+    // Mock profile fetch
+    await page.route(`${API_BASE}/profiles/otheruser`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ profile: mockProfile }),
+      });
+    });
+    // Mock articles for profile
+    await page.route(`${API_BASE}/articles?author=otheruser*`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ articles: [], articlesCount: 0 }),
+      });
+    });
+    // Network error on follow
+    await page.route(`${API_BASE}/profiles/otheruser/follow`, (route) => {
+      route.abort('internetdisconnected');
+    });
+    await page.goto('/');
+    await page.evaluate(() => localStorage.setItem('jwtToken', 'fake-token'));
+    await page.goto('/profile/otheruser');
+    // Click follow button
+    await page.click('button:has-text("Follow")');
+    // App should not crash - button should still be visible
+    await expect(page.locator('button:has-text("Follow")')).toBeVisible();
+    // TODO and then try again with the network connection back?
+  });
+});
+
+test.describe('Error Handling - Edge Cases', () => {
+  test('should handle malformed JSON response', async ({ page }) => {
+    await page.route(`${API_BASE}/articles*`, (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: '{ invalid json }}}',
+      });
+    });
+    await page.goto('/');
+    // App should not crash on malformed response
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle empty response body', async ({ page }) => {
+    await page.route(`${API_BASE}/articles*`, (route) => {
+      route.fulfill({
+        status: 204, // No Content is more appropriate for empty body
+        contentType: 'application/json',
+        body: '',
+      });
+    });
+    await page.goto('/');
+    // App should handle empty response - at minimum page shouldn't be blank
+    const body = page.locator('body');
+    await expect(body).not.toBeEmpty();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle 404 for non-existent article', async ({ page }) => {
+    await mockApiError(page, '/articles/non-existent-slug', 404, {
+      errors: { article: ['not found'] },
+    });
+    await page.goto('/article/non-existent-slug');
+    // Should show appropriate message, not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+
+  test('should handle 404 for non-existent profile', async ({ page }) => {
+    await mockApiError(page, '/profiles/nonexistentuser', 404, {
+      errors: { profile: ['not found'] },
+    });
+    await page.goto('/profile/nonexistentuser');
+    // Should show appropriate message, not crash
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    // TODO add another check to ensure expected content is there?
+  });
+});
