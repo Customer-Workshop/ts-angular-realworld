@@ -177,7 +177,8 @@ test.describe('Error Handling - 401 Unauthorized', () => {
     await page.goto('/article/test-article');
     // App should handle gracefully - not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    // Article content should still be visible
+    await expect(page.locator('.article-content')).toBeVisible();
   });
 });
 
@@ -297,12 +298,14 @@ test.describe('Error Handling - 403 Forbidden', () => {
     await page.goto('/article/test-article');
     // Wait for comment to be visible
     await expect(page.locator('.card-block:has-text("This is a comment")')).toBeVisible();
-    // Click delete button on the comment
-    await page.locator('.card-block:has-text("This is a comment")').locator('i.ion-trash-a').click();
-    // Comment should still be visible (delete failed), app should not crash
-    // TODO verify a local failure indicator is present?
+    // Click delete button on the comment (delete button is in card-footer, sibling of card-block)
+    await page.locator('.card:has-text("This is a comment")').locator('i.ion-trash-a').click();
+    // Comment should still be visible (delete failed)
     await expect(page.locator('.card-block:has-text("This is a comment")')).toBeVisible();
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    // Error message should be displayed
+    await expect(page.locator('.error-messages').last()).toBeVisible();
+    // Article content should still be visible
+    await expect(page.locator('.article-content')).toBeVisible();
   });
 
   test('should handle 403 when following user you are blocked by', async ({ page }) => {
@@ -729,8 +732,8 @@ test.describe('Error Handling - Network Errors', () => {
     await page.goto('/article/test-article');
     await page.fill('textarea[placeholder="Write a comment..."]', 'Test comment');
     await page.click('button:has-text("Post Comment")');
-    await expect(page.locator('.error-messages')).toBeVisible();
-    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    await expect(page.locator('.error-messages').first()).toBeVisible();
+    await expect(page.locator('.error-messages').first()).toContainText('Unable to connect');
     // Article content should still be visible
     await expect(page.locator('.article-content')).toBeVisible();
   });
