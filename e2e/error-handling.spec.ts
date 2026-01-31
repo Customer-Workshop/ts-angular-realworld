@@ -365,10 +365,10 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
       errors: { server: ['Internal server error'] },
     });
     await page.goto('/');
-    // App should not crash - navbar should still be visible
+    // App should not crash - navbar and banner should still be visible
     await expect(page.locator('nav.navbar')).toBeVisible();
     await expect(page.locator('.navbar-brand')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    await expect(page.locator('.banner')).toBeVisible();
   });
 
   test('should handle 500 on tags load', async ({ page }) => {
@@ -387,7 +387,8 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     // App should load without tags, not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
     await expect(page.locator('.banner')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    // Feed toggle should still be functional
+    await expect(page.locator('.feed-toggle')).toBeVisible();
   });
 
   test('should handle network error on tags load', async ({ page }) => {
@@ -405,7 +406,8 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     // App should load without tags, not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
     await expect(page.locator('.banner')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    // Feed toggle should still be functional
+    await expect(page.locator('.feed-toggle')).toBeVisible();
   });
 
   test('should handle 500 on user profile load', async ({ page }) => {
@@ -415,7 +417,8 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     await page.goto('/profile/someuser');
     // Should show error state or fallback, not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    // Profile container should exist (even if empty)
+    await expect(page.locator('.profile-page, .user-info')).toBeVisible();
   });
 
   test('should handle network error on user profile load', async ({ page }) => {
@@ -425,7 +428,8 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     await page.goto('/profile/someuser');
     // Should not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    // Profile container should exist (even if empty)
+    await expect(page.locator('.profile-page, .user-info')).toBeVisible();
   });
 
   test('should handle 500 on article detail load', async ({ page }) => {
@@ -435,7 +439,8 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     await page.goto('/article/some-article');
     // App should not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    // Article page container should exist
+    await expect(page.locator('.article-page')).toBeVisible();
   });
 
   test('should handle network error on article detail load', async ({ page }) => {
@@ -445,7 +450,8 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     await page.goto('/article/some-article');
     // App should not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    // Article page container should exist
+    await expect(page.locator('.article-page')).toBeVisible();
   });
 
   test('should handle 500 when submitting settings', async ({ page }) => {
@@ -476,7 +482,8 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     await page.click('button[type="submit"]');
     // Should show error, not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    // Form should still be usable
+    await expect(page.locator('input[formControlName="email"]')).toBeVisible();
   });
 
   test('should handle intermittent 500 errors gracefully', async ({ page }) => {
@@ -501,7 +508,7 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     await page.goto('/');
     // App should still be functional after error
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    await expect(page.locator('.banner')).toBeVisible();
   });
 });
 
@@ -514,7 +521,7 @@ test.describe('Error Handling - Network Errors', () => {
     await page.goto('/');
     // App should not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    await expect(page.locator('.banner')).toBeVisible();
   });
 
   test('should handle connection refused', async ({ page }) => {
@@ -524,7 +531,7 @@ test.describe('Error Handling - Network Errors', () => {
     await page.goto('/');
     // App should not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    await expect(page.locator('.banner')).toBeVisible();
   });
 
   test('should show error message on settings form when network fails', async ({ page }) => {
@@ -563,7 +570,8 @@ test.describe('Error Handling - Network Errors', () => {
     // Should show network error message
     await expect(page.locator('.error-messages')).toBeVisible();
     await expect(page.locator('.error-messages')).toContainText('Unable to connect');
-    // TODO add another check to ensure expected content is there?
+    // Form should still be usable
+    await expect(page.locator('button:has-text("Update Settings")')).toBeVisible();
   });
 
   test('should show error message on login form when network fails', async ({ page }) => {
@@ -576,7 +584,8 @@ test.describe('Error Handling - Network Errors', () => {
     await page.click('button[type="submit"]');
     await expect(page.locator('.error-messages')).toBeVisible();
     await expect(page.locator('.error-messages')).toContainText('Unable to connect');
-    // TODO add another check to ensure expected content is there?
+    // Form should still be usable
+    await expect(page.locator('button[type="submit"]')).toBeVisible();
   });
 
   test('should show error message on register form when network fails', async ({ page }) => {
@@ -590,7 +599,8 @@ test.describe('Error Handling - Network Errors', () => {
     await page.click('button[type="submit"]');
     await expect(page.locator('.error-messages')).toBeVisible();
     await expect(page.locator('.error-messages')).toContainText('Unable to connect');
-    // TODO add another check to ensure expected content is there?
+    // Form should still be usable
+    await expect(page.locator('button[type="submit"]')).toBeVisible();
   });
 
   test('should show error message on create article form when network fails', async ({ page }) => {
@@ -617,7 +627,8 @@ test.describe('Error Handling - Network Errors', () => {
     await page.click('button:has-text("Publish Article")');
     await expect(page.locator('.error-messages')).toBeVisible();
     await expect(page.locator('.error-messages')).toContainText('Unable to connect');
-    // TODO add another check to ensure expected content is there?
+    // Form should still be usable
+    await expect(page.locator('button:has-text("Publish Article")')).toBeVisible();
   });
 
   test('should show error message on update article form when network fails', async ({ page }) => {
@@ -664,7 +675,8 @@ test.describe('Error Handling - Network Errors', () => {
     await page.click('button:has-text("Publish Article")');
     await expect(page.locator('.error-messages')).toBeVisible();
     await expect(page.locator('.error-messages')).toContainText('Unable to connect');
-    // TODO add another check to ensure expected content is there?
+    // Form should still be usable
+    await expect(page.locator('button:has-text("Publish Article")')).toBeVisible();
   });
 
   test('should show error message when adding comment fails due to network', async ({ page }) => {
@@ -719,7 +731,8 @@ test.describe('Error Handling - Network Errors', () => {
     await page.click('button:has-text("Post Comment")');
     await expect(page.locator('.error-messages')).toBeVisible();
     await expect(page.locator('.error-messages')).toContainText('Unable to connect');
-    // TODO add another check to ensure expected content is there?
+    // Article content should still be visible
+    await expect(page.locator('.article-content')).toBeVisible();
   });
 
   test('should handle network error when favoriting article', async ({ page }) => {
@@ -776,7 +789,8 @@ test.describe('Error Handling - Network Errors', () => {
     await page.locator('button:has-text("Favorite Article")').first().click();
     // App should not crash - button should still be visible
     await expect(page.locator('button:has-text("Favorite Article")').first()).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    // Article content should still be visible
+    await expect(page.locator('.article-content')).toBeVisible();
   });
 
   test('should handle network error when following user', async ({ page }) => {
@@ -823,7 +837,8 @@ test.describe('Error Handling - Network Errors', () => {
     await page.click('button:has-text("Follow")');
     // App should not crash - button should still be visible
     await expect(page.locator('button:has-text("Follow")')).toBeVisible();
-    // TODO and then try again with the network connection back?
+    // Profile info should still be visible
+    await expect(page.locator('.user-info')).toBeVisible();
   });
 });
 
@@ -839,7 +854,7 @@ test.describe('Error Handling - Edge Cases', () => {
     await page.goto('/');
     // App should not crash on malformed response
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    await expect(page.locator('.banner')).toBeVisible();
   });
 
   test('should handle empty response body', async ({ page }) => {
@@ -851,10 +866,9 @@ test.describe('Error Handling - Edge Cases', () => {
       });
     });
     await page.goto('/');
-    // App should handle empty response - at minimum page shouldn't be blank
-    const body = page.locator('body');
-    await expect(body).not.toBeEmpty();
-    // TODO add another check to ensure expected content is there?
+    // App should handle empty response - banner and navbar should be visible
+    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('.banner')).toBeVisible();
   });
 
   test('should handle 404 for non-existent article', async ({ page }) => {
@@ -864,7 +878,8 @@ test.describe('Error Handling - Edge Cases', () => {
     await page.goto('/article/non-existent-slug');
     // Should show appropriate message, not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    // Article page container should still render
+    await expect(page.locator('.article-page')).toBeVisible();
   });
 
   test('should handle 404 for non-existent profile', async ({ page }) => {
@@ -874,6 +889,7 @@ test.describe('Error Handling - Edge Cases', () => {
     await page.goto('/profile/nonexistentuser');
     // Should show appropriate message, not crash
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // TODO add another check to ensure expected content is there?
+    // Profile page container should still render
+    await expect(page.locator('.profile-page, .user-info')).toBeVisible();
   });
 });
