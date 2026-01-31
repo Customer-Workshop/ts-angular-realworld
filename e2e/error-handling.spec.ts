@@ -45,7 +45,7 @@ test.describe('Error Handling - 400 Bad Request', () => {
     // Should show error messages, not crash
     await expect(page.locator('.error-messages')).toBeVisible();
     await expect(page).toHaveURL('/login');
-    // TODO add another check to ensure the inputs are still there?
+    await expect(page.locator('input[formControlName="email"]')).toBeVisible();
   });
 
   test('should handle 400 on registration with validation errors', async ({ page }) => {
@@ -63,7 +63,7 @@ test.describe('Error Handling - 400 Bad Request', () => {
     // Should show error messages
     await expect(page.locator('.error-messages')).toBeVisible();
     await expect(page).toHaveURL('/register');
-    // TODO add another check to ensure the inputs are still there?
+    await expect(page.locator('input[formControlName="email"]')).toBeVisible();
   });
 
   test('should handle 400 on article creation', async ({ page }) => {
@@ -89,7 +89,7 @@ test.describe('Error Handling - 400 Bad Request', () => {
     await page.click('button:has-text("Publish")');
     // Should show errors, not crash
     await expect(page.locator('.error-messages')).toBeVisible();
-    // TODO add another check to ensure the inputs are still there?
+    await expect(page.locator('input[formControlName="title"]')).toBeVisible();
   });
 });
 
@@ -104,7 +104,8 @@ test.describe('Error Handling - 401 Unauthorized', () => {
     // App should not crash - should show logged out state
     await expect(page.locator('nav.navbar')).toBeVisible();
     await expect(page.locator('a[href="/login"]')).toBeVisible();
-    // TODO add another check to ensure the articles are still there?
+    // 401 on /user shouldn't break unrelated features
+    await expect(page.locator('.article-preview').first()).toBeVisible();
   });
 
   test('should handle 401 when accessing protected route', async ({ page }) => {
@@ -114,12 +115,9 @@ test.describe('Error Handling - 401 Unauthorized', () => {
     await page.goto('/');
     await setFakeAuthToken(page);
     await page.goto('/settings');
-    // Should redirect to login or show appropriate message
+    // Should redirect to login
     await expect(page.locator('nav.navbar')).toBeVisible();
-    // App should not show blank screen
-    const bodyContent = await page.locator('body').textContent();
-    expect(bodyContent?.trim().length).toBeGreaterThan(0);
-    // TODO add another check to ensure expected content is there?
+    await expect(page.locator('input[formControlName="email"]')).toBeVisible();
   });
 
   test('should handle 401 when posting a comment', async ({ page }) => {
