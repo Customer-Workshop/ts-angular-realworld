@@ -54,6 +54,14 @@ export class UserService {
 
   public isAuthenticated = this.currentUser.pipe(map(user => !!user));
 
+  /**
+   * Synchronously get the current cached user value.
+   * Returns null if not authenticated or still loading.
+   */
+  getCurrentUserSync(): User | null {
+    return this.currentUserSubject.getValue();
+  }
+
   private retryAttempt = 0;
   private retrySubscription: Subscription | null = null;
 
