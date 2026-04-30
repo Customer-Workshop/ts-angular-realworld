@@ -120,14 +120,14 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     const user = generateUniqueUser();
     await register(page, user.username, user.email, user.password);
     await page.goto('/settings', { waitUntil: 'load' });
-    await expect(page.locator('input[formControlName="image"]')).toHaveValue('');
+    await expect(page.locator('input[name="image"]')).toHaveValue('');
   });
 
   test('settings form should show empty string for null bio', async ({ page }) => {
     const user = generateUniqueUser();
     await register(page, user.username, user.email, user.password);
     await page.goto('/settings', { waitUntil: 'load' });
-    await expect(page.locator('textarea[formControlName="bio"]')).toHaveValue('');
+    await expect(page.locator('textarea[name="bio"]')).toHaveValue('');
   });
 
   test('default avatar should display on other user articles in feed', async ({ page, request }) => {

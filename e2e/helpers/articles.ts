@@ -10,9 +10,9 @@ export interface ArticleData {
 export async function createArticle(page: Page, article: ArticleData) {
   await page.goto('/editor', { waitUntil: 'load' });
 
-  await page.fill('input[formControlName="title"]', article.title);
-  await page.fill('input[formControlName="description"]', article.description);
-  await page.fill('textarea[formControlName="body"]', article.body);
+  await page.fill('input[name="title"]', article.title);
+  await page.fill('input[name="description"]', article.description);
+  await page.fill('textarea[name="body"]', article.body);
 
   if (article.tags && article.tags.length > 0) {
     for (const tag of article.tags) {
@@ -29,19 +29,19 @@ export async function editArticle(page: Page, slug: string, updates: Partial<Art
   await page.goto(`/editor/${slug}`, { waitUntil: 'load' });
 
   // Wait for form to be populated before clearing/filling
-  await page.waitForSelector('input[formControlName="title"]');
+  await page.waitForSelector('input[name="title"]');
 
   if (updates.title) {
-    await page.fill('input[formControlName="title"]', '');
-    await page.fill('input[formControlName="title"]', updates.title);
+    await page.fill('input[name="title"]', '');
+    await page.fill('input[name="title"]', updates.title);
   }
   if (updates.description) {
-    await page.fill('input[formControlName="description"]', '');
-    await page.fill('input[formControlName="description"]', updates.description);
+    await page.fill('input[name="description"]', '');
+    await page.fill('input[name="description"]', updates.description);
   }
   if (updates.body) {
-    await page.fill('textarea[formControlName="body"]', '');
-    await page.fill('textarea[formControlName="body"]', updates.body);
+    await page.fill('textarea[name="body"]', '');
+    await page.fill('textarea[name="body"]', updates.body);
   }
 
   await Promise.all([page.waitForURL(/\/article\/.+/), page.click('button:has-text("Publish Article")')]);
