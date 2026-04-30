@@ -325,6 +325,72 @@ describe('UserService', () => {
     });
   });
 
+  describe('getCurrentUser error handling', () => {
+    it('should call purgeAuth on 4XX error (invalid token)', async () => {
+      service.getCurrentUser().subscribe();
+      const req = httpMock.expectOne('/user');
+      req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
+      await new Promise(resolve => setTimeout(resolve, 10));
+      expect(jwtService.destroyToken).toHaveBeenCalled();
+      const authState = await firstValueFrom(service.authState);
+      expect(authState).toBe('unauthenticated');
+    });
+
+    it('should enter unavailable state on 5XX error (server down)', async () => {
+      jwtService.getToken.mockReturnValue('some-token');
+      service.getCurrentUser().subscribe();
+      const req = httpMock.expectOne('/user');
+      req.flush('Internal Server Error', { status: 500, statusText: 'Internal Server Error' });
+      await new Promise(resolve => setTimeout(resolve, 10));
+      expect(jwtService.destroyToken).not.toHaveBeenCalled();
+      const authState = await firstValueFrom(service.authState);
+      expect(authState).toBe('unavailable');
+    });
+
+    it('should enter unavailable state on network error (status 0)', async () => {
+      jwtService.getToken.mockReturnValue('some-token');
+      service.getCurrentUser().subscribe();
+      const req = httpMock.expectOne('/user');
+      req.error(new ProgressEvent('error'), { status: 0, statusText: '' });
+      await new Promise(resolve => setTimeout(resolve, 10));
+      const authState = await firstValueFrom(service.authState);
+      expect(authState).toBe('unavailable');
+    });
+
+    it('should not schedule retry when no token exists', async () => {
+      jwtService.getToken.mockReturnValue(null);
+      service.getCurrentUser().subscribe();
+      const req = httpMock.expectOne('/user');
+      req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+      await new Promise(resolve => setTimeout(resolve, 2100));
+      // Should not have retried (no second /user request)
+      httpMock.expectNone('/user');
+    });
+
+    it('should cancel previous retry when setAuth is called', async () => {
+      jwtService.getToken.mockReturnValue('some-token');
+      service.getCurrentUser().subscribe();
+      const req = httpMock.expectOne('/user');
+      req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+      await new Promise(resolve => setTimeout(resolve, 10));
+      // setAuth should cancel retry and reset
+      service.setAuth(mockUser);
+      const authState = await firstValueFrom(service.authState);
+      expect(authState).toBe('authenticated');
+    });
+
+    it('should cancel previous retry when purgeAuth is called', async () => {
+      jwtService.getToken.mockReturnValue('some-token');
+      service.getCurrentUser().subscribe();
+      const req = httpMock.expectOne('/user');
+      req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+      await new Promise(resolve => setTimeout(resolve, 10));
+      service.purgeAuth();
+      const authState = await firstValueFrom(service.authState);
+      expect(authState).toBe('unauthenticated');
+    });
+  });
+
   describe('Integration scenarios', () => {
     it('should handle complete authentication flow', async () => {
       const credentials = { email: 'test@example.com', password: 'password123' };
