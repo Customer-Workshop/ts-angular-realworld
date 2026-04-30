@@ -16,6 +16,7 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
     "test:e2e:disabled": "cat e2e/DISABLED_TESTS.md",
+    "test:mutation": "stryker run",
     "format": "prettier --write \"**/*.{ts,html,css,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,html,css,json,md}\"",
     "prepare": "husky install"
@@ -45,6 +46,9 @@
     "@angular/cli": "21.1.1",
     "@angular/compiler-cli": "21.1.1",
     "@playwright/test": "^1.58.0",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/typescript-checker": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/marked": "^6.0.0",
     "@vitest/ui": "^4.0.18",
     "husky": "^9.1.7",
