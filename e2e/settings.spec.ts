@@ -21,17 +21,17 @@ test.describe('Settings - Profile Updates', () => {
 
     // Go to settings
     await page.goto('/settings');
-    await expect(page.locator('input[formControlName="username"]')).toHaveValue(user.username);
+    await expect(page.locator('[data-testid="settings-username"]')).toHaveValue(user.username);
 
     // Update bio
     const newBio = `Bio updated at ${Date.now()}`;
-    await page.fill('textarea[formControlName="bio"]', newBio);
+    await page.fill('[data-testid="settings-bio"]', newBio);
 
     // Submit and wait for API response
     const responsePromise = page.waitForResponse(
       res => res.url().includes('/user') && res.request().method() === 'PUT',
     );
-    await page.click('button[type="submit"]');
+    await page.click('[data-testid="settings-submit"]');
     const response = await responsePromise;
 
     // Verify API response
@@ -60,17 +60,17 @@ test.describe('Settings - Profile Updates', () => {
     await register(page, user.username, user.email, user.password);
 
     await page.goto('/settings');
-    await expect(page.locator('input[formControlName="username"]')).toHaveValue(user.username);
+    await expect(page.locator('[data-testid="settings-username"]')).toHaveValue(user.username);
 
     // Update image
     const newImage = 'https://api.realworld.io/images/smiley-cyrus.jpeg';
-    await page.fill('input[formControlName="image"]', newImage);
+    await page.fill('[data-testid="settings-image"]', newImage);
 
     // Submit and wait for API response
     const responsePromise = page.waitForResponse(
       res => res.url().includes('/user') && res.request().method() === 'PUT',
     );
-    await page.click('button[type="submit"]');
+    await page.click('[data-testid="settings-submit"]');
     const response = await responsePromise;
 
     // Verify API response
@@ -101,14 +101,14 @@ test.describe('Settings - Profile Updates', () => {
     // Update both fields
     const newBio = `Multi-update bio ${Date.now()}`;
     const newImage = 'https://api.realworld.io/images/smiley-cyrus.jpeg';
-    await page.fill('textarea[formControlName="bio"]', newBio);
-    await page.fill('input[formControlName="image"]', newImage);
+    await page.fill('[data-testid="settings-bio"]', newBio);
+    await page.fill('[data-testid="settings-image"]', newImage);
 
     // Submit and wait for API response
     const responsePromise = page.waitForResponse(
       res => res.url().includes('/user') && res.request().method() === 'PUT',
     );
-    await page.click('button[type="submit"]');
+    await page.click('[data-testid="settings-submit"]');
     const response = await responsePromise;
 
     // Verify API response has both updates
@@ -138,18 +138,18 @@ test.describe('Settings - Profile Updates', () => {
     await page.goto('/settings');
 
     const newBio = `Visible bio ${Date.now()}`;
-    await page.fill('textarea[formControlName="bio"]', newBio);
+    await page.fill('[data-testid="settings-bio"]', newBio);
 
     await Promise.all([
       page.waitForResponse(res => res.url().includes('/user') && res.request().method() === 'PUT'),
-      page.click('button[type="submit"]'),
+      page.click('[data-testid="settings-submit"]'),
     ]);
 
     // Wait for profile page
     await expect(page).toHaveURL(new RegExp(`/profile/${user.username}`));
 
     // Verify bio is displayed on profile
-    await expect(page.locator('.user-info')).toContainText(newBio);
+    await expect(page.locator('[data-testid="user-info"]')).toContainText(newBio);
   });
 
   test('should display updated image on profile page', async ({ page }) => {
@@ -159,18 +159,18 @@ test.describe('Settings - Profile Updates', () => {
     await page.goto('/settings');
 
     const newImage = 'https://api.realworld.io/images/smiley-cyrus.jpeg';
-    await page.fill('input[formControlName="image"]', newImage);
+    await page.fill('[data-testid="settings-image"]', newImage);
 
     await Promise.all([
       page.waitForResponse(res => res.url().includes('/user') && res.request().method() === 'PUT'),
-      page.click('button[type="submit"]'),
+      page.click('[data-testid="settings-submit"]'),
     ]);
 
     // Wait for profile page
     await expect(page).toHaveURL(new RegExp(`/profile/${user.username}`));
 
-    // Verify image is displayed on profile (use .user-img to avoid matching navbar)
-    await expect(page.locator(`.user-img[src="${newImage}"]`)).toBeVisible();
+    // Verify image is displayed on profile
+    await expect(page.locator(`[data-testid="profile-image"][src="${newImage}"]`)).toBeVisible();
   });
 
   test('should preserve username in navbar after update', async ({ page }) => {
@@ -178,20 +178,20 @@ test.describe('Settings - Profile Updates', () => {
     await register(page, user.username, user.email, user.password);
 
     // Verify navbar shows username before update
-    await expect(page.locator(`a[href="/profile/${user.username}"]`)).toBeVisible();
+    await expect(page.locator('[data-testid="nav-profile"]')).toBeVisible();
 
     await page.goto('/settings');
 
     const newBio = `Navbar test ${Date.now()}`;
-    await page.fill('textarea[formControlName="bio"]', newBio);
+    await page.fill('[data-testid="settings-bio"]', newBio);
 
     await Promise.all([
       page.waitForResponse(res => res.url().includes('/user') && res.request().method() === 'PUT'),
-      page.click('button[type="submit"]'),
+      page.click('[data-testid="settings-submit"]'),
     ]);
 
     // Verify navbar STILL shows username after update (not corrupted)
-    await expect(page.locator(`a[href="/profile/${user.username}"]`)).toBeVisible();
+    await expect(page.locator('[data-testid="nav-profile"]')).toBeVisible();
   });
 
   test('should allow navigation to settings again after update', async ({ page }) => {
@@ -201,29 +201,29 @@ test.describe('Settings - Profile Updates', () => {
     await page.goto('/settings');
 
     const bio1 = `First update ${Date.now()}`;
-    await page.fill('textarea[formControlName="bio"]', bio1);
+    await page.fill('[data-testid="settings-bio"]', bio1);
 
     await Promise.all([
       page.waitForResponse(res => res.url().includes('/user') && res.request().method() === 'PUT'),
-      page.click('button[type="submit"]'),
+      page.click('[data-testid="settings-submit"]'),
     ]);
 
     await expect(page).toHaveURL(new RegExp(`/profile/${user.username}`));
 
     // Go back to settings
     await page.goto('/settings');
-    await expect(page.locator('input[formControlName="username"]')).toHaveValue(user.username);
+    await expect(page.locator('[data-testid="settings-username"]')).toHaveValue(user.username);
 
     // Verify previous update persisted
-    await expect(page.locator('textarea[formControlName="bio"]')).toHaveValue(bio1);
+    await expect(page.locator('[data-testid="settings-bio"]')).toHaveValue(bio1);
 
     // Make another update
     const bio2 = `Second update ${Date.now()}`;
-    await page.fill('textarea[formControlName="bio"]', bio2);
+    await page.fill('[data-testid="settings-bio"]', bio2);
 
     await Promise.all([
       page.waitForResponse(res => res.url().includes('/user') && res.request().method() === 'PUT'),
-      page.click('button[type="submit"]'),
+      page.click('[data-testid="settings-submit"]'),
     ]);
 
     // Verify second update worked

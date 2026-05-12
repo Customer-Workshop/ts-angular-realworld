@@ -27,6 +27,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
         'btn-primary': article.favorited,
       }"
       (click)="toggleFavorite()"
+      data-testid="favorite-button"
     >
       <i class="ion-heart"></i> <ng-content></ng-content>
     </button>

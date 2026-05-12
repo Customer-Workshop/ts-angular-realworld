@@ -28,6 +28,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
         'btn-secondary': profile.following,
       }"
       (click)="toggleFollowing()"
+      data-testid="follow-button"
     >
       <i class="ion-plus-round"></i>
       &nbsp;

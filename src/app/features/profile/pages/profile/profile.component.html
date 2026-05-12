@@ -9,18 +9,22 @@
     </div>
   }
   @if (profile(); as p) {
-    <div class="user-info">
+    <div class="user-info" data-testid="user-info">
       <div class="container">
         <div class="row">
           <div class="col-xs-12 col-md-10 offset-md-1">
-            <img [src]="p.image | defaultImage" class="user-img" />
-            <h4>{{ p.username }}</h4>
-            <p>{{ p.bio ?? '' }}</p>
+            <img [src]="p.image | defaultImage" class="user-img" data-testid="profile-image" />
+            <h4 data-testid="profile-username">{{ p.username }}</h4>
+            <p data-testid="profile-bio">{{ p.bio ?? '' }}</p>
             @if (!isUser()) {
               <app-follow-button [profile]="p" (toggle)="onToggleFollowing($event)" />
             }
             @if (isUser()) {
-              <a [routerLink]="['/settings']" class="btn btn-sm btn-outline-secondary action-btn">
+              <a
+                [routerLink]="['/settings']"
+                class="btn btn-sm btn-outline-secondary action-btn"
+                data-testid="edit-profile-settings"
+              >
                 <i class="ion-gear-a"></i> Edit Profile Settings
               </a>
             }

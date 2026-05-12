@@ -21,8 +21,8 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     const user = generateUniqueUser();
     await register(page, user.username, user.email, user.password);
     await page.goto(`/profile/${user.username}`, { waitUntil: 'load' });
-    await page.waitForSelector('.user-img');
-    const profileImg = page.locator('.user-img');
+    await page.waitForSelector('[data-testid="profile-image"]');
+    const profileImg = page.locator('[data-testid="profile-image"]');
     await expect(profileImg).toBeVisible();
     const src = await profileImg.getAttribute('src');
     expect(src).toContain('default-avatar.svg');
@@ -31,7 +31,7 @@ test.describe('Null/Empty Image and Bio Handling', () => {
   test('newly registered user should show default avatar in navbar', async ({ page }) => {
     const user = generateUniqueUser();
     await register(page, user.username, user.email, user.password);
-    const navImg = page.locator('nav .user-pic');
+    const navImg = page.locator('[data-testid="nav-user-pic"]');
     await expect(navImg).toBeVisible();
     const src = await navImg.getAttribute('src');
     expect(src).toContain('default-avatar.svg');
@@ -42,7 +42,7 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     await register(page, user.username, user.email, user.password);
     const article = generateUniqueArticle();
     await createArticle(page, article);
-    const articleMetaImg = page.locator('.article-meta img').first();
+    const articleMetaImg = page.locator('[data-testid="article-content"] img').first();
     await expect(articleMetaImg).toBeVisible();
     const src = await articleMetaImg.getAttribute('src');
     expect(src).toContain('default-avatar.svg');
@@ -55,12 +55,12 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     await createArticle(page, article);
     await addComment(page, 'Test comment for avatar check');
     // Comment form author image
-    const commentFormImg = page.locator('.comment-form .comment-author-img');
+    const commentFormImg = page.locator('[data-testid="comment-form-author-img"]');
     await expect(commentFormImg).toBeVisible();
     const formSrc = await commentFormImg.getAttribute('src');
     expect(formSrc).toContain('default-avatar.svg');
     // Posted comment author image
-    const commentImg = page.locator('.card:not(.comment-form) .comment-author-img').first();
+    const commentImg = page.locator('[data-testid="comment-card"] [data-testid="comment-author-img"]').first();
     await expect(commentImg).toBeVisible();
     const commentSrc = await commentImg.getAttribute('src');
     expect(commentSrc).toContain('default-avatar.svg');
@@ -73,8 +73,8 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     await updateUserViaAPI(request, token, { image: testImage });
     await login(page, user.email, user.password);
     await page.goto(`/profile/${user.username}`, { waitUntil: 'load' });
-    await page.waitForSelector('.user-img');
-    const profileImg = page.locator('.user-img');
+    await page.waitForSelector('[data-testid="profile-image"]');
+    const profileImg = page.locator('[data-testid="profile-image"]');
     await expect(profileImg).toHaveAttribute('src', testImage);
   });
 
@@ -86,8 +86,8 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     await updateUserViaAPI(request, token, { image: '' });
     await login(page, user.email, user.password);
     await page.goto(`/profile/${user.username}`, { waitUntil: 'load' });
-    await page.waitForSelector('.user-img');
-    const profileImg = page.locator('.user-img');
+    await page.waitForSelector('[data-testid="profile-image"]');
+    const profileImg = page.locator('[data-testid="profile-image"]');
     const src = await profileImg.getAttribute('src');
     expect(src).toContain('default-avatar.svg');
   });
@@ -96,8 +96,8 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     const user = generateUniqueUser();
     await register(page, user.username, user.email, user.password);
     await page.goto(`/profile/${user.username}`, { waitUntil: 'load' });
-    await page.waitForSelector('.user-info');
-    const bioText = await page.locator('.user-info p').textContent();
+    await page.waitForSelector('[data-testid="user-info"]');
+    const bioText = await page.locator('[data-testid="profile-bio"]').textContent();
     expect(bioText?.trim()).not.toBe('null');
     expect(bioText?.trim()).toBe('');
   });
@@ -110,8 +110,8 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     await updateUserViaAPI(request, token, { bio: '' });
     await login(page, user.email, user.password);
     await page.goto(`/profile/${user.username}`, { waitUntil: 'load' });
-    await page.waitForSelector('.user-info');
-    const bioText = await page.locator('.user-info p').textContent();
+    await page.waitForSelector('[data-testid="user-info"]');
+    const bioText = await page.locator('[data-testid="profile-bio"]').textContent();
     expect(bioText?.trim()).not.toBe(testBio);
     expect(bioText?.trim()).not.toBe('null');
   });
@@ -120,14 +120,14 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     const user = generateUniqueUser();
     await register(page, user.username, user.email, user.password);
     await page.goto('/settings', { waitUntil: 'load' });
-    await expect(page.locator('input[formControlName="image"]')).toHaveValue('');
+    await expect(page.locator('[data-testid="settings-image"]')).toHaveValue('');
   });
 
   test('settings form should show empty string for null bio', async ({ page }) => {
     const user = generateUniqueUser();
     await register(page, user.username, user.email, user.password);
     await page.goto('/settings', { waitUntil: 'load' });
-    await expect(page.locator('textarea[formControlName="bio"]')).toHaveValue('');
+    await expect(page.locator('[data-testid="settings-bio"]')).toHaveValue('');
   });
 
   test('default avatar should display on other user articles in feed', async ({ page, request }) => {
@@ -145,12 +145,12 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     await register(page, viewer.username, viewer.email, viewer.password);
     await page.goto('/', { waitUntil: 'load' });
     // Find the article in the global feed
-    await page.locator('a.nav-link', { hasText: 'Global Feed' }).click();
-    await page.waitForSelector('.article-preview', { timeout: 10000 });
-    const articlePreview = page.locator('.article-preview', { hasText: `Null avatar test ${uniqueId}` });
+    await page.locator('[data-testid="feed-global"]').click();
+    await page.waitForSelector('[data-testid="article-preview"]', { timeout: 10000 });
+    const articlePreview = page.locator('[data-testid="article-preview"]', { hasText: `Null avatar test ${uniqueId}` });
     await expect(articlePreview).toBeVisible();
     // The author avatar in the article preview should be the default
-    const authorImg = articlePreview.locator('.article-meta img');
+    const authorImg = articlePreview.locator('img').first();
     const src = await authorImg.getAttribute('src');
     expect(src).toContain('default-avatar.svg');
   });

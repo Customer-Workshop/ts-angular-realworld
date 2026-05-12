@@ -24,6 +24,7 @@
                 class="btn btn-sm btn-outline-danger"
                 [ngClass]="{ disabled: isDeleting() }"
                 (click)="deleteArticle()"
+                data-testid="delete-article"
               >
                 <i class="ion-trash-a"></i> Delete Article
               </button>
@@ -43,7 +44,7 @@
     </div>
 
     <div class="container page">
-      <div class="row article-content">
+      <div class="row article-content" data-testid="article-content">
         <div class="col-md-12">
           <div [innerHTML]="a.body | markdown | async"></div>
 
@@ -71,6 +72,7 @@
                 class="btn btn-sm btn-outline-danger"
                 [ngClass]="{ disabled: isDeleting() }"
                 (click)="deleteArticle()"
+                data-testid="delete-article"
               >
                 <i class="ion-trash-a"></i> Delete Article
               </button>
@@ -92,7 +94,7 @@
         <div class="col-xs-12 col-md-8 offset-md-2">
           <div *ifAuthenticated="true">
             <app-list-errors [errors]="commentFormErrors()" />
-            <form class="card comment-form" (ngSubmit)="addComment()">
+            <form class="card comment-form" (ngSubmit)="addComment()" data-testid="comment-form">
               <fieldset [disabled]="isSubmitting()">
                 <div class="card-block">
                   <textarea
@@ -100,11 +102,16 @@
                     placeholder="Write a comment..."
                     rows="3"
                     [formControl]="commentControl"
+                    data-testid="comment-input"
                   ></textarea>
                 </div>
                 <div class="card-footer">
-                  <img [src]="currentUser()?.image | defaultImage" class="comment-author-img" />
-                  <button class="btn btn-sm btn-primary" type="submit">Post Comment</button>
+                  <img
+                    [src]="currentUser()?.image | defaultImage"
+                    class="comment-author-img"
+                    data-testid="comment-form-author-img"
+                  />
+                  <button class="btn btn-sm btn-primary" type="submit" data-testid="post-comment">Post Comment</button>
                 </div>
               </fieldset>
             </form>

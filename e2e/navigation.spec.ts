@@ -20,18 +20,18 @@ test.describe('Navigation and Filtering', () => {
     await page.goto('/');
 
     // Should see home page
-    await expect(page.locator('a.navbar-brand')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar-brand"]')).toBeVisible();
 
     // Click Sign in
-    await page.click('a[href="/login"]');
+    await page.click('[data-testid="nav-sign-in"]');
     await expect(page).toHaveURL('/login');
 
     // Click Sign up
-    await page.click('a[href="/register"]');
+    await page.click('[data-testid="nav-sign-up"]');
     await expect(page).toHaveURL('/register');
 
     // Click Home
-    await page.click('a.navbar-brand');
+    await page.click('[data-testid="navbar-brand"]');
     await expect(page).toHaveURL('/');
   });
 
@@ -40,21 +40,21 @@ test.describe('Navigation and Filtering', () => {
     await register(page, user.username, user.email, user.password);
 
     // Should see authenticated navigation
-    await expect(page.locator('nav a[href="/"]').first()).toBeVisible();
-    await expect(page.locator('a[href="/editor"]')).toBeVisible();
-    await expect(page.locator('a[href="/settings"]')).toBeVisible();
-    await expect(page.locator(`a[href="/profile/${user.username}"]`)).toBeVisible();
+    await expect(page.locator('[data-testid="nav-home"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-new-article"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-settings"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-profile"]')).toBeVisible();
 
     // Navigate to editor
-    await page.click('a[href="/editor"]');
+    await page.click('[data-testid="nav-new-article"]');
     await expect(page).toHaveURL('/editor');
 
     // Navigate to settings
-    await page.click('a[href="/settings"]');
+    await page.click('[data-testid="nav-settings"]');
     await expect(page).toHaveURL('/settings');
 
     // Navigate to profile
-    await page.click(`a[href="/profile/${user.username}"]`);
+    await page.click('[data-testid="nav-profile"]');
     await expect(page).toHaveURL(`/profile/${user.username}`);
   });
 
@@ -74,15 +74,16 @@ test.describe('Navigation and Filtering', () => {
     await page.goto('/', { waitUntil: 'load' });
 
     // Wait for the sidebar to be visible
-    await page.waitForSelector('.sidebar .tag-list', { timeout: 3000 });
+    await page.waitForSelector('[data-testid="sidebar-tags"]', { timeout: 3000 });
 
     // Wait for the specific tag to appear in Popular Tags sidebar (or use first available tag)
     // Note: Custom tags might not appear immediately in Popular Tags
-    const tagExists = (await page.locator('.sidebar .tag-list .tag-pill:has-text("playwright-test")').count()) > 0;
+    const tagExists =
+      (await page.locator('[data-testid="sidebar-tags"] .tag-pill:has-text("playwright-test")').count()) > 0;
 
     if (tagExists) {
       // Click on our custom tag
-      await page.click('.sidebar .tag-list .tag-pill:has-text("playwright-test")');
+      await page.click('[data-testid="sidebar-tags"] .tag-pill:has-text("playwright-test")');
 
       // Should see the tag filter active
       await expect(page.locator('.nav-link:has-text("playwright-test")')).toBeVisible();
@@ -91,16 +92,16 @@ test.describe('Navigation and Filtering', () => {
       await expect(page.locator(`h1:has-text("${article.title}")`)).toBeVisible();
     } else {
       // If custom tag doesn't appear, use an existing popular tag from the demo backend
-      await page.click('.sidebar .tag-list .tag-pill:first-child');
+      await page.click('[data-testid="sidebar-tags"] .tag-pill:first-child');
 
       // Get the tag text that was clicked
-      const tagText = await page.locator('.sidebar .tag-list .tag-pill:first-child').textContent();
+      const tagText = await page.locator('[data-testid="sidebar-tags"] .tag-pill:first-child').textContent();
 
       // Should see the tag filter active
       await expect(page.locator(`.nav-link:has-text("${tagText?.trim()}")`)).toBeVisible();
 
       // Should show articles with that tag
-      await expect(page.locator('.article-preview').first()).toBeVisible();
+      await expect(page.locator('[data-testid="article-preview"]').first()).toBeVisible();
     }
   });
 
@@ -116,19 +117,19 @@ test.describe('Navigation and Filtering', () => {
     await page.goto('/', { waitUntil: 'load' });
 
     // Wait for articles to load
-    await page.waitForSelector('.article-preview', { timeout: 3000 });
+    await page.waitForSelector('[data-testid="article-preview"]', { timeout: 3000 });
 
     // Should see our article and existing articles in Global Feed
-    await page.click('a:has-text("Global Feed")');
+    await page.click('[data-testid="feed-global"]');
     // Wait for articles to load after clicking Global Feed
-    await page.waitForSelector('.article-preview', { timeout: 3000 });
+    await page.waitForSelector('[data-testid="article-preview"]', { timeout: 3000 });
     await expect(page.locator(`h1:has-text("${article.title}")`).first()).toBeVisible();
 
     // Also should see johndoe's articles from demo backend
-    await expect(page.locator('.article-preview').first()).toBeVisible();
+    await expect(page.locator('[data-testid="article-preview"]').first()).toBeVisible();
 
     // Switch to Your Feed (should be empty since not following anyone)
-    await page.click('a:has-text("Your Feed")');
+    await page.click('[data-testid="feed-your"]');
     // Should see empty state or own articles
   });
 
@@ -148,9 +149,9 @@ test.describe('Navigation and Filtering', () => {
     await page.goto('/');
 
     // Should see tags in the sidebar
-    await expect(page.locator('.sidebar .tag-list')).toBeVisible();
-    await expect(page.locator('.sidebar .tag-list .tag-pill:has-text("popular")')).toBeVisible();
-    await expect(page.locator('.sidebar .tag-list .tag-pill:has-text("trending")')).toBeVisible();
+    await expect(page.locator('[data-testid="sidebar-tags"]')).toBeVisible();
+    await expect(page.locator('[data-testid="sidebar-tags"] .tag-pill:has-text("popular")')).toBeVisible();
+    await expect(page.locator('[data-testid="sidebar-tags"] .tag-pill:has-text("trending")')).toBeVisible();
   });
 
   test('should paginate articles', async ({ page, request }) => {
@@ -163,10 +164,10 @@ test.describe('Navigation and Filtering', () => {
     // Login and navigate to our tag to see only our articles
     await login(page, user.email, user.password);
     await page.goto(`/tag/${uniqueTag}`);
-    await page.waitForSelector('.article-preview', { timeout: 3000 });
+    await page.waitForSelector('[data-testid="article-preview"]', { timeout: 3000 });
 
     // Count articles on first page (should be 10 or less)
-    const firstPageCount = await page.locator('.article-preview').count();
+    const firstPageCount = await page.locator('[data-testid="article-preview"]').count();
     expect(firstPageCount).toBeGreaterThan(0);
     expect(firstPageCount).toBeLessThanOrEqual(10);
   });
@@ -182,7 +183,7 @@ test.describe('Navigation and Filtering', () => {
     await page.goto('/');
 
     // Click on author name
-    await page.click(`.article-preview .author:has-text("${user.username}")`);
+    await page.click(`[data-testid="article-preview"] .author:has-text("${user.username}")`);
 
     // Should navigate to author profile
     await expect(page).toHaveURL(`/profile/${user.username}`);
@@ -202,19 +203,19 @@ test.describe('Navigation and Filtering', () => {
 
     // Favorite article1 - go to global feed to see the article
     await page.goto('/');
-    await page.click(`.article-preview:has-text("${article1.title}") button.btn-outline-primary`);
+    await page.click(`[data-testid="article-preview"]:has-text("${article1.title}") [data-testid="favorite-button"]`);
 
     // Go to profile
     await page.goto(`/profile/${user.username}`);
 
     // Should have 2 articles in My Articles
-    await expect(page.locator('.article-preview')).toHaveCount(2);
+    await expect(page.locator('[data-testid="article-preview"]')).toHaveCount(2);
 
     // Click Favorited Articles tab (likely just says "Favorited")
     await page.click('a:has-text("Favorited")');
 
     // Should have 1 favorited article
-    await expect(page.locator('.article-preview')).toHaveCount(1);
+    await expect(page.locator('[data-testid="article-preview"]')).toHaveCount(1);
   });
 
   test('should handle empty states gracefully', async ({ page }) => {
@@ -225,10 +226,10 @@ test.describe('Navigation and Filtering', () => {
     await page.goto(`/profile/${user.username}`, { waitUntil: 'load' });
 
     // Wait for profile page to load
-    await page.waitForSelector('.user-info, h4', { timeout: 3000 });
+    await page.waitForSelector('[data-testid="user-info"]', { timeout: 3000 });
 
     // Check if there are article previews (there might be none on empty profile)
-    const articleCount = await page.locator('.article-preview').count();
+    const articleCount = await page.locator('[data-testid="article-preview"]').count();
     // Empty profile should have 0 articles or show empty state message
     expect(articleCount).toBeGreaterThanOrEqual(0);
 
@@ -237,7 +238,7 @@ test.describe('Navigation and Filtering', () => {
     if (favoritedTabExists) {
       await page.click('a:has-text("Favorited")');
       // Should handle empty favorites gracefully (0 or more articles)
-      const favoritedCount = await page.locator('.article-preview').count();
+      const favoritedCount = await page.locator('[data-testid="article-preview"]').count();
       expect(favoritedCount).toBeGreaterThanOrEqual(0);
     }
   });

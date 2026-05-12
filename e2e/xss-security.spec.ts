@@ -123,13 +123,13 @@ test.describe('@security XSS Security - Image URL Injection (Direct API)', () =>
       await page.goto(`/profile/${user.username}`);
       await expect(page).toHaveURL(new RegExp(`/profile/${user.username}`));
       // Wait for profile to load (user-info section contains the image)
-      await page.waitForSelector('.user-info', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="user-info"]', { timeout: 10000 });
       // Wait for any deferred/async XSS payloads to execute
       await page.waitForTimeout(1500);
       // Verify no XSS was triggered
       expect(wasXssTriggered()).toBe(false);
       // Verify the malicious payload is NOT in an executable context
-      const imgElement = page.locator('.user-img');
+      const imgElement = page.locator('[data-testid="profile-image"]');
       await expect(imgElement).toBeVisible();
       // Check that onerror/onload are not attributes on the img element
       const hasOnerror = await imgElement.evaluate(el => el.hasAttribute('onerror'));
@@ -153,7 +153,7 @@ test.describe('@security XSS Security - Image URL Injection (Direct API)', () =>
     await page.goto('/settings');
     await page.waitForTimeout(1000);
     // Check navbar image doesn't have event handlers
-    const navbarImg = page.locator('nav .user-pic');
+    const navbarImg = page.locator('[data-testid="nav-user-pic"]');
     if (await navbarImg.isVisible()) {
       const hasOnerror = await navbarImg.evaluate(el => el.hasAttribute('onerror'));
       expect(hasOnerror).toBe(false);
@@ -171,16 +171,16 @@ test.describe('@security XSS Security - Image URL Injection (Direct API)', () =>
     // Inject token and go to an article
     await injectToken(page, token);
     await page.goto('/');
-    await page.waitForSelector('.article-preview a.preview-link, .article-preview');
+    await page.waitForSelector('[data-testid="article-preview"]');
     // Click on the first article
-    const articleLink = page.locator('.article-preview a.preview-link').first();
+    const articleLink = page.locator('[data-testid="article-preview-link"]').first();
     if (await articleLink.isVisible()) {
       await articleLink.click();
       await page.waitForURL(/\/article\//);
       // Wait for comment section to load and any XSS to trigger
       await page.waitForTimeout(1500);
       // The user's image appears in the comment form
-      const commentAuthorImg = page.locator('.comment-author-img').first();
+      const commentAuthorImg = page.locator('[data-testid="comment-author-img"]').first();
       if (await commentAuthorImg.isVisible()) {
         const hasOnerror = await commentAuthorImg.evaluate(el => el.hasAttribute('onerror'));
         expect(hasOnerror).toBe(false);
@@ -212,19 +212,19 @@ test.describe('@security XSS Security - Article Description in Feed (Direct API)
       await injectToken(page, token);
       await page.goto(`/profile/${user.username}`);
       // Wait for article preview to render
-      await page.waitForSelector('.article-preview', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="article-preview"]', { timeout: 10000 });
       // Wait for any XSS to trigger
       await page.waitForTimeout(1500);
       // Verify no XSS was triggered
       expect(wasXssTriggered()).toBe(false);
       // Check the description doesn't contain executable elements
-      const description = page.locator('.article-preview p').first();
+      const description = page.locator('[data-testid="article-preview"] p').first();
       if (await description.isVisible()) {
         // The payload should be visible as escaped text, not executed
         const text = await description.textContent();
         expect(text).toContain('Before:');
         // Verify no script tags were injected into the DOM
-        const scriptCount = await page.locator('.article-preview script').count();
+        const scriptCount = await page.locator('[data-testid="article-preview"] script').count();
         expect(scriptCount).toBe(0);
       }
     });
@@ -249,13 +249,13 @@ test.describe('@security XSS Security - Article Body Markdown (Direct API)', () 
       // Now visit the article page as the authenticated user
       await page.goto(`/article/${slug}`);
       // Wait for content to render
-      await page.waitForSelector('.article-content', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="article-content"]', { timeout: 10000 });
       // Wait for any XSS to trigger
       await page.waitForTimeout(1500);
       // Verify no XSS was triggered
       expect(wasXssTriggered()).toBe(false);
       // Check the article body container for dangerous elements/attributes
-      const articleBody = page.locator('.article-content');
+      const articleBody = page.locator('[data-testid="article-content"]');
       await expect(articleBody).toBeVisible();
       // Verify no script tags exist
       const scriptCount = await articleBody.locator('script').count();

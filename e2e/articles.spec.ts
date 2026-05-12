@@ -38,7 +38,7 @@ test.describe('Articles', () => {
 
     // Should show article content
     await expect(page.locator('h1')).toHaveText(article.title);
-    await expect(page.locator('.article-content p')).toContainText(article.body);
+    await expect(page.locator('[data-testid="article-content"] p')).toContainText(article.body);
 
     // Should show tags
     for (const tag of article.tags || []) {
@@ -124,7 +124,7 @@ test.describe('Articles', () => {
     await page.goto('/', { waitUntil: 'load' });
 
     // Click on the first article to go to its detail page
-    await page.click('.article-preview h1');
+    await page.click('[data-testid="article-preview-link"] h1');
     await page.waitForLoadState('load');
 
     // Favorite the article using the helper (which expects to be on article detail page)
@@ -139,13 +139,13 @@ test.describe('Articles', () => {
     await page.goto('/', { waitUntil: 'load' });
 
     // Wait for articles to load
-    await page.waitForSelector('.article-preview', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="article-preview"]', { timeout: 10000 });
 
     // Get the username of the currently logged in user from the navbar
-    const currentUsername = await page.locator('nav a[href^="/profile/"]').first().textContent();
+    const currentUsername = await page.locator('[data-testid="nav-profile"]').first().textContent();
 
     // Find an article that's NOT from the current user
-    const articles = await page.locator('.article-preview').all();
+    const articles = await page.locator('[data-testid="article-preview"]').all();
     let articleToFavorite = null;
 
     for (const article of articles) {
@@ -186,7 +186,7 @@ test.describe('Articles', () => {
     await page.goto('/', { waitUntil: 'load' });
 
     // Wait for articles to load
-    await page.waitForSelector('.article-preview', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="article-preview"]', { timeout: 10000 });
 
     // Wait for our specific article to appear
     await page.waitForSelector(`h1:has-text("${article.title}")`, { timeout: 10000 });
@@ -211,7 +211,7 @@ test.describe('Articles', () => {
     await page.goto('/');
 
     // Article preview should show correct information
-    const preview = page.locator('.article-preview').first();
+    const preview = page.locator('[data-testid="article-preview"]').first();
     await expect(preview.locator('h1')).toHaveText(article.title);
     await expect(preview.locator('p')).toContainText(article.description);
 

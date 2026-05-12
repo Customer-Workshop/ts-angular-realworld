@@ -9,7 +9,13 @@
         <form [formGroup]="settingsForm" (ngSubmit)="submitForm()">
           <fieldset [disabled]="isSubmitting()">
             <fieldset class="form-group">
-              <input class="form-control" type="text" placeholder="URL of profile picture" formControlName="image" />
+              <input
+                class="form-control"
+                type="text"
+                placeholder="URL of profile picture"
+                formControlName="image"
+                data-testid="settings-image"
+              />
             </fieldset>
 
             <fieldset class="form-group">
@@ -18,6 +24,7 @@
                 type="text"
                 placeholder="Username"
                 formControlName="username"
+                data-testid="settings-username"
               />
             </fieldset>
 
@@ -27,12 +34,19 @@
                 rows="8"
                 placeholder="Short bio about you"
                 formControlName="bio"
+                data-testid="settings-bio"
               >
               </textarea>
             </fieldset>
 
             <fieldset class="form-group">
-              <input class="form-control form-control-lg" type="email" placeholder="Email" formControlName="email" />
+              <input
+                class="form-control form-control-lg"
+                type="email"
+                placeholder="Email"
+                formControlName="email"
+                data-testid="settings-email"
+              />
             </fieldset>
 
             <fieldset class="form-group">
@@ -41,17 +55,22 @@
                 type="password"
                 placeholder="New Password"
                 formControlName="password"
+                data-testid="settings-password"
               />
             </fieldset>
 
-            <button class="btn btn-lg btn-primary pull-xs-right" type="submit">Update Settings</button>
+            <button class="btn btn-lg btn-primary pull-xs-right" type="submit" data-testid="settings-submit">
+              Update Settings
+            </button>
           </fieldset>
         </form>
 
         <!-- Line break for logout button -->
         <hr />
 
-        <button class="btn btn-outline-danger" (click)="logout()">Or click here to logout.</button>
+        <button class="btn btn-outline-danger" (click)="logout()" data-testid="logout-button">
+          Or click here to logout.
+        </button>
       </div>
     </div>
   </div>

@@ -29,9 +29,9 @@ test.describe('User Fetch Errors on App Initialization - 4XX (should logout)', (
     });
     await page.reload();
     // App should not crash - should show logged out state
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('a[href="/login"]')).toBeVisible();
-    await expect(page.locator('a[href="/register"]')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-in"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-up"]')).toBeVisible();
     // Invalid token should be cleared
     const token = await getToken(page);
     expect(token).toBeNull();
@@ -51,11 +51,11 @@ test.describe('User Fetch Errors on App Initialization - 4XX (should logout)', (
     });
     await page.reload();
     // App should not crash - should show logged out state
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('a[href="/login"]')).toBeVisible();
-    await expect(page.locator('a[href="/register"]')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-in"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-up"]')).toBeVisible();
     // 401 on /user shouldn't break unrelated features (articles should still load)
-    await expect(page.locator('.article-preview').first()).toBeVisible();
+    await expect(page.locator('[data-testid="article-preview"]').first()).toBeVisible();
     // Invalid token should be cleared (use debug interface)
     const token = await getToken(page);
     expect(token).toBeNull();
@@ -77,9 +77,9 @@ test.describe('User Fetch Errors on App Initialization - 4XX (should logout)', (
     });
     await page.reload();
     // App should not crash - should show logged out state
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('a[href="/login"]')).toBeVisible();
-    await expect(page.locator('a[href="/register"]')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-in"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-up"]')).toBeVisible();
     // Token should be cleared on 403
     const token = await getToken(page);
     expect(token).toBeNull();
@@ -99,9 +99,9 @@ test.describe('User Fetch Errors on App Initialization - 4XX (should logout)', (
     });
     await page.reload();
     // App should not crash - should show logged out state
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('a[href="/login"]')).toBeVisible();
-    await expect(page.locator('a[href="/register"]')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-in"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-up"]')).toBeVisible();
     // Token should be cleared on 404
     const token = await getToken(page);
     expect(token).toBeNull();
@@ -123,7 +123,7 @@ test.describe('User Fetch Errors on App Initialization - 5XX (should enter unava
     });
     await page.reload();
     // App should not crash - should show "unavailable" mode with reconnect option
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     await expect(page.locator('text=Connecting')).toBeVisible();
     // Token should be KEPT (server error, not auth error)
     const token = await getToken(page);
@@ -155,7 +155,7 @@ test.describe('User Fetch Errors on App Initialization - 5XX (should enter unava
     const firstTag = page.locator('.tag-pill').first();
     if (await firstTag.isVisible()) {
       await firstTag.click();
-      await expect(page.locator('nav.navbar')).toBeVisible();
+      await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     }
     // Navigate to home via navbar
     await page.click('a.nav-link:has-text("Home")');
@@ -181,7 +181,7 @@ test.describe('User Fetch Errors on App Initialization - 5XX (should enter unava
     });
     await page.reload();
     // App should not crash - should show "unavailable" mode
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     await expect(page.locator('text=Connecting')).toBeVisible();
     // Token should be KEPT (network error, not auth error)
     const token = await getToken(page);
@@ -198,7 +198,7 @@ test.describe('User Fetch Errors on App Initialization - 5XX (should enter unava
     });
     await page.reload();
     // App should not crash - should show "unavailable" mode
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     await expect(page.locator('text=Connecting')).toBeVisible();
     // Token should be KEPT (network error, not auth error)
     const token = await getToken(page);
@@ -219,7 +219,7 @@ test.describe('User Fetch Errors on App Initialization - 5XX (should enter unava
     });
     await page.reload();
     // App should not crash (empty 200 is a server bug, app may stay in loading state)
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
   });
 
   test('should handle malformed JSON on /api/user', async ({ page }) => {
@@ -236,7 +236,7 @@ test.describe('User Fetch Errors on App Initialization - 5XX (should enter unava
     });
     await page.reload();
     // App should not crash - should show "unavailable" mode (parsing error)
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     await expect(page.locator('text=Connecting')).toBeVisible();
     // Token should be KEPT (parsing error, not auth error)
     const token = await getToken(page);
@@ -262,7 +262,7 @@ test.describe('User Fetch Errors - Protected Routes', () => {
     });
     await page.goto('/settings');
     // Should redirect to login or home, not show blank screen
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     await expect(page).not.toHaveURL('/settings');
   });
 
@@ -276,7 +276,7 @@ test.describe('User Fetch Errors - Protected Routes', () => {
     });
     await page.goto('/editor');
     // Should redirect to login or home, not show blank screen
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     await expect(page).not.toHaveURL('/editor');
   });
 
@@ -290,7 +290,7 @@ test.describe('User Fetch Errors - Protected Routes', () => {
     });
     await page.goto('/settings');
     // App should not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
   });
 
   test('should handle network error on /settings gracefully', async ({ page }) => {
@@ -299,6 +299,6 @@ test.describe('User Fetch Errors - Protected Routes', () => {
     });
     await page.goto('/settings');
     // App should not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
   });
 });

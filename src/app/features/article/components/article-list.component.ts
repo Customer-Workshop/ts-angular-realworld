@@ -30,7 +30,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
       @for (article of results(); track article.slug) {
         <app-article-preview [articleInput]="article" />
       } @empty {
-        <div class="article-preview empty-feed-message">
+        <div class="article-preview empty-feed-message" data-testid="empty-feed-message">
           @if (isFollowingFeed) {
             Your feed is empty. Follow some users to see their articles here, or check out the
             <a routerLink="/">Global Feed</a>!

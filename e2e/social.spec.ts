@@ -25,13 +25,13 @@ test.describe('Social Features', () => {
     await followUser(page, 'johndoe');
 
     // Button should change to Unfollow
-    await expect(page.locator('button:has-text("Unfollow")')).toBeVisible();
+    await expect(page.locator('[data-testid="follow-button"]:has-text("Unfollow")')).toBeVisible();
 
     // Unfollow johndoe
     await unfollowUser(page, 'johndoe');
 
     // Button should change back to Follow
-    await expect(page.locator('button:has-text("Follow")')).toBeVisible();
+    await expect(page.locator('[data-testid="follow-button"]:has-text("Follow")')).toBeVisible();
   });
 
   test('should view own profile', async ({ page }) => {
@@ -39,16 +39,16 @@ test.describe('Social Features', () => {
     await register(page, user.username, user.email, user.password);
 
     // Click on profile link
-    await page.click(`a[href="/profile/${user.username}"]`);
+    await page.click('[data-testid="nav-profile"]');
 
     // Should show user information
-    await expect(page.locator('h4')).toHaveText(user.username);
+    await expect(page.locator('[data-testid="profile-username"]')).toHaveText(user.username);
 
     // Should see Edit Profile Settings button (own profile)
-    await expect(page.locator('a[href="/settings"]').filter({ hasText: 'Edit Profile Settings' })).toBeVisible();
+    await expect(page.locator('[data-testid="edit-profile-settings"]')).toBeVisible();
 
     // Should not see Follow button (can't follow yourself)
-    await expect(page.locator('button:has-text("Follow")')).not.toBeVisible();
+    await expect(page.locator('[data-testid="follow-button"]')).not.toBeVisible();
   });
 
   test('should view other user profile', async ({ page }) => {
@@ -60,21 +60,19 @@ test.describe('Social Features', () => {
     await page.goto('/profile/johndoe', { waitUntil: 'load' });
 
     // Wait for profile page to load
-    await page.waitForSelector('h4', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="profile-username"]', { timeout: 10000 });
 
     // Should show johndoe's information
-    await expect(page.locator('h4')).toHaveText('johndoe');
+    await expect(page.locator('[data-testid="profile-username"]')).toHaveText('johndoe');
 
     // Should see Follow button (other user's profile)
-    await expect(page.locator('button:has-text("Follow")')).toBeVisible();
+    await expect(page.locator('[data-testid="follow-button"]')).toBeVisible();
 
-    // Should not see "Edit Profile Settings" button in the profile area (different from nav bar Settings link)
-    await expect(
-      page.locator('.user-info a[href="/settings"]').filter({ hasText: 'Edit Profile Settings' }),
-    ).not.toBeVisible();
+    // Should not see "Edit Profile Settings" button in the profile area
+    await expect(page.locator('[data-testid="edit-profile-settings"]')).not.toBeVisible();
 
     // Should see johndoe's articles (demo backend has articles from johndoe)
-    await expect(page.locator('.article-preview').first()).toBeVisible();
+    await expect(page.locator('[data-testid="article-preview"]').first()).toBeVisible();
   });
 
   test('should display user articles on profile', async ({ page }) => {
@@ -105,24 +103,24 @@ test.describe('Social Features', () => {
     await page.goto('/', { waitUntil: 'load' });
 
     // Wait for articles to load
-    await page.waitForSelector('.article-preview', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="article-preview"]', { timeout: 10000 });
 
     // Get the title of the first article in the feed
-    const firstArticleTitle = await page.locator('.article-preview h1').first().textContent();
+    const firstArticleTitle = await page.locator('[data-testid="article-preview-link"] h1').first().textContent();
 
     // Click on first article to go to its detail page
-    await page.click('.article-preview h1:first-child');
+    await page.click('[data-testid="article-preview-link"] h1');
     await page.waitForURL(/\/article\/.+/, { timeout: 10000 });
 
     // Wait for article page to load
-    await page.waitForSelector('button:has-text("Favorite"), button:has-text("Unfavorite")', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="favorite-button"]', { timeout: 10000 });
 
     // Check if already favorited, if not favorite it
-    const isFavorited = (await page.locator('button:has-text("Unfavorite")').count()) > 0;
+    const isFavorited = (await page.locator('[data-testid="favorite-button"]:has-text("Unfavorite")').count()) > 0;
     if (!isFavorited) {
-      await page.click('button.btn-outline-primary:has-text("Favorite")');
+      await page.click('[data-testid="favorite-button"]:has-text("Favorite")');
       // Wait for the favorite to complete
-      await page.waitForSelector('button.btn-primary:has-text("Unfavorite")', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="favorite-button"]:has-text("Unfavorite")', { timeout: 10000 });
     }
 
     // Go to profile and click Favorited tab
@@ -132,7 +130,7 @@ test.describe('Social Features', () => {
 
     // Wait for URL to change then for articles to load
     await expect(page).toHaveURL(`/profile/${user.username}/favorites`);
-    await expect(page.locator('.article-preview').first()).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('[data-testid="article-preview"]').first()).toBeVisible({ timeout: 3000 });
   });
 
   test('should display followed users articles in feed', async ({ page }) => {
@@ -145,13 +143,13 @@ test.describe('Social Features', () => {
 
     // Go to home and click "Your Feed"
     await page.goto('/', { waitUntil: 'load' });
-    await page.waitForSelector('.feed-toggle', { timeout: 10000 });
-    await page.click('a:has-text("Your Feed")');
+    await page.waitForSelector('[data-testid="feed-toggle"]', { timeout: 10000 });
+    await page.click('[data-testid="feed-your"]');
 
     // Wait for articles to load
-    await page.waitForSelector('.article-preview', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="article-preview"]', { timeout: 10000 });
 
     // Should see johndoe's articles in feed
-    await expect(page.locator('.article-preview').first()).toBeVisible();
+    await expect(page.locator('[data-testid="article-preview"]').first()).toBeVisible();
   });
 });

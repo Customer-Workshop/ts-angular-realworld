@@ -8,14 +8,14 @@ import { FavoriteButtonComponent } from './favorite-button.component';
 @Component({
   selector: 'app-article-preview',
   template: `
-    <div class="article-preview">
+    <div class="article-preview" data-testid="article-preview">
       <app-article-meta [article]="article()">
         <app-favorite-button [article]="article()" (toggle)="toggleFavorite($event)" class="pull-xs-right">
           {{ article().favoritesCount }}
         </app-favorite-button>
       </app-article-meta>
 
-      <a [routerLink]="['/article', article().slug]" class="preview-link">
+      <a [routerLink]="['/article', article().slug]" class="preview-link" data-testid="article-preview-link">
         <h1>{{ article().title }}</h1>
         <p>{{ article().description }}</p>
         <span>Read more...</span>

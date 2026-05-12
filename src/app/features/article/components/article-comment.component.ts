@@ -11,15 +11,19 @@ import { DefaultImagePipe } from '../../../shared/pipes/default-image.pipe';
   selector: 'app-article-comment',
   template: `
     @if (comment) {
-      <div class="card">
-        <div class="card-block">
+      <div class="card" data-testid="comment-card">
+        <div class="card-block" data-testid="comment-body">
           <p class="card-text">
             {{ comment.body }}
           </p>
         </div>
         <div class="card-footer">
           <a class="comment-author" [routerLink]="['/profile', comment.author.username]">
-            <img [src]="comment.author.image | defaultImage" class="comment-author-img" />
+            <img
+              [src]="comment.author.image | defaultImage"
+              class="comment-author-img"
+              data-testid="comment-author-img"
+            />
           </a>
           &nbsp;
           <a class="comment-author" [routerLink]="['/profile', comment.author.username]">
@@ -30,7 +34,7 @@ import { DefaultImagePipe } from '../../../shared/pipes/default-image.pipe';
           </span>
           @if (canModify$ | async) {
             <span class="mod-options">
-              <i class="ion-trash-a" (click)="delete.emit(true)"></i>
+              <i class="ion-trash-a" (click)="delete.emit(true)" data-testid="delete-comment"></i>
             </span>
           }
         </div>

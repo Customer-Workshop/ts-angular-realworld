@@ -33,13 +33,13 @@ test.describe('Error Handling - 400 Bad Request', () => {
       errors: { 'email or password': ['is invalid'] },
     });
     await page.goto('/login');
-    await page.fill('input[formControlName="email"]', 'test@test.com');
-    await page.fill('input[formControlName="password"]', 'password');
-    await page.click('button[type="submit"]');
+    await page.fill('[data-testid="input-email"]', 'test@test.com');
+    await page.fill('[data-testid="input-password"]', 'password');
+    await page.click('[data-testid="auth-submit"]');
     // Should show error messages, not crash
-    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
     await expect(page).toHaveURL('/login');
-    await expect(page.locator('input[formControlName="email"]')).toBeVisible();
+    await expect(page.locator('[data-testid="input-email"]')).toBeVisible();
   });
 
   test('should handle 400 on registration with validation errors', async ({ page }) => {
@@ -50,14 +50,14 @@ test.describe('Error Handling - 400 Bad Request', () => {
       },
     });
     await page.goto('/register');
-    await page.fill('input[formControlName="username"]', 'ab');
-    await page.fill('input[formControlName="email"]', 'taken@test.com');
-    await page.fill('input[formControlName="password"]', 'password123');
-    await page.click('button[type="submit"]');
+    await page.fill('[data-testid="input-username"]', 'ab');
+    await page.fill('[data-testid="input-email"]', 'taken@test.com');
+    await page.fill('[data-testid="input-password"]', 'password123');
+    await page.click('[data-testid="auth-submit"]');
     // Should show error messages
-    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
     await expect(page).toHaveURL('/register');
-    await expect(page.locator('input[formControlName="email"]')).toBeVisible();
+    await expect(page.locator('[data-testid="input-email"]')).toBeVisible();
   });
 
   test('should handle 400 on article creation', async ({ page }) => {
@@ -83,13 +83,13 @@ test.describe('Error Handling - 400 Bad Request', () => {
       'POST',
     );
     await page.goto('/editor');
-    await page.fill('input[formControlName="title"]', '');
-    await page.fill('input[formControlName="description"]', 'desc');
-    await page.fill('textarea[formControlName="body"]', '');
-    await page.click('button:has-text("Publish")');
+    await page.fill('[data-testid="editor-title"]', '');
+    await page.fill('[data-testid="editor-description"]', 'desc');
+    await page.fill('[data-testid="editor-body"]', '');
+    await page.click('[data-testid="editor-publish"]');
     // Should show errors, not crash
-    await expect(page.locator('.error-messages')).toBeVisible();
-    await expect(page.locator('input[formControlName="title"]')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
+    await expect(page.locator('[data-testid="editor-title"]')).toBeVisible();
   });
 });
 
@@ -120,12 +120,12 @@ test.describe('Error Handling - 401 Unauthorized', () => {
     await setFakeAuthToken(page);
     await page.goto('/settings');
     // Wait for form to load
-    await expect(page.locator('input[formControlName="email"]')).toBeVisible();
+    await expect(page.locator('[data-testid="input-email"]')).toBeVisible();
     // Submit the form
-    await page.click('button[type="submit"]');
+    await page.click('[data-testid="settings-submit"]');
     // Should show error message, form should still be usable
-    await expect(page.locator('.error-messages')).toBeVisible();
-    await expect(page.locator('input[formControlName="email"]')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
+    await expect(page.locator('[data-testid="input-email"]')).toBeVisible();
   });
 
   test('should handle 401 when posting a comment', async ({ page }) => {
@@ -184,9 +184,9 @@ test.describe('Error Handling - 401 Unauthorized', () => {
     });
     await page.goto('/article/test-article');
     // App should handle gracefully - not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Article content should still be visible
-    await expect(page.locator('.article-content')).toBeVisible();
+    await expect(page.locator('[data-testid="article-content"]')).toBeVisible();
   });
 });
 
@@ -236,12 +236,12 @@ test.describe('Error Handling - 403 Forbidden', () => {
     await setFakeAuthToken(page);
     await page.goto('/editor/test-article');
     // Wait for form to load
-    await expect(page.locator('input[formControlName="title"]')).toHaveValue('Test Article');
+    await expect(page.locator('[data-testid="editor-title"]')).toHaveValue('Test Article');
     // Try to update
-    await page.click('button:has-text("Publish")');
+    await page.click('[data-testid="editor-publish"]');
     // Should show error message
-    await expect(page.locator('.error-messages')).toBeVisible();
-    await expect(page.locator('input[formControlName="title"]')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
+    await expect(page.locator('[data-testid="editor-title"]')).toBeVisible();
   });
 
   test('should handle 403 when deleting another users comment', async ({ page }) => {
@@ -305,15 +305,18 @@ test.describe('Error Handling - 403 Forbidden', () => {
     await setFakeAuthToken(page);
     await page.goto('/article/test-article');
     // Wait for comment to be visible
-    await expect(page.locator('.card-block:has-text("This is a comment")')).toBeVisible();
+    await expect(page.locator('[data-testid="comment-body"]:has-text("This is a comment")')).toBeVisible();
     // Click delete button on the comment (delete button is in card-footer, sibling of card-block)
-    await page.locator('.card:has-text("This is a comment")').locator('i.ion-trash-a').click();
+    await page
+      .locator('[data-testid="comment-card"]:has-text("This is a comment")')
+      .locator('[data-testid="delete-comment"]')
+      .click();
     // Comment should still be visible (delete failed)
-    await expect(page.locator('.card-block:has-text("This is a comment")')).toBeVisible();
+    await expect(page.locator('[data-testid="comment-body"]:has-text("This is a comment")')).toBeVisible();
     // Error message should be displayed
-    await expect(page.locator('.error-messages').last()).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]').last()).toBeVisible();
     // Article content should still be visible
-    await expect(page.locator('.article-content')).toBeVisible();
+    await expect(page.locator('[data-testid="article-content"]')).toBeVisible();
   });
 
   test('should handle 403 when following user you are blocked by', async ({ page }) => {
@@ -361,12 +364,12 @@ test.describe('Error Handling - 403 Forbidden', () => {
     await setFakeAuthToken(page);
     await page.goto('/profile/blockeduser');
     // Wait for profile to load
-    await expect(page.locator('button:has-text("Follow")')).toBeVisible();
+    await expect(page.locator('[data-testid="follow-button"]:has-text("Follow")')).toBeVisible();
     // Try to follow
-    await page.click('button:has-text("Follow")');
+    await page.click('[data-testid="follow-button"]:has-text("Follow")');
     // App should not crash, button should still show Follow (not Unfollow)
-    await expect(page.locator('button:has-text("Follow")')).toBeVisible();
-    await expect(page.locator('.user-info')).toBeVisible();
+    await expect(page.locator('[data-testid="follow-button"]:has-text("Follow")')).toBeVisible();
+    await expect(page.locator('[data-testid="user-info"]')).toBeVisible();
   });
 });
 
@@ -377,9 +380,9 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     });
     await page.goto('/');
     // App should not crash - navbar and banner should still be visible
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('.navbar-brand')).toBeVisible();
-    await expect(page.locator('.banner')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar-brand"]')).toBeVisible();
+    await expect(page.locator('[data-testid="banner"]')).toBeVisible();
   });
 
   test('should handle 500 on tags load', async ({ page }) => {
@@ -396,10 +399,10 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     });
     await page.goto('/');
     // App should load without tags, not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('.banner')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="banner"]')).toBeVisible();
     // Feed toggle should still be functional
-    await expect(page.locator('.feed-toggle')).toBeVisible();
+    await expect(page.locator('[data-testid="feed-toggle"]')).toBeVisible();
   });
 
   test('should handle network error on tags load', async ({ page }) => {
@@ -415,10 +418,10 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     });
     await page.goto('/');
     // App should load without tags, not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('.banner')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="banner"]')).toBeVisible();
     // Feed toggle should still be functional
-    await expect(page.locator('.feed-toggle')).toBeVisible();
+    await expect(page.locator('[data-testid="feed-toggle"]')).toBeVisible();
   });
 
   test('should handle 500 on user profile load', async ({ page }) => {
@@ -427,9 +430,9 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     });
     await page.goto('/profile/someuser');
     // Should show error state or fallback, not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Profile container should exist (even if empty)
-    await expect(page.locator('.profile-page, .user-info')).toBeVisible();
+    await expect(page.locator('[data-testid="user-info"]')).toBeVisible();
   });
 
   test('should handle network error on user profile load', async ({ page }) => {
@@ -438,9 +441,9 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     });
     await page.goto('/profile/someuser');
     // Should not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Profile container should exist (even if empty)
-    await expect(page.locator('.profile-page, .user-info')).toBeVisible();
+    await expect(page.locator('[data-testid="user-info"]')).toBeVisible();
   });
 
   test('should handle 500 on article detail load', async ({ page }) => {
@@ -449,7 +452,7 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     });
     await page.goto('/article/some-article');
     // App should not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Article page container should exist
     await expect(page.locator('.article-page')).toBeVisible();
   });
@@ -460,7 +463,7 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     });
     await page.goto('/article/some-article');
     // App should not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Article page container should exist
     await expect(page.locator('.article-page')).toBeVisible();
   });
@@ -488,13 +491,13 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     await setFakeAuthToken(page);
     await page.goto('/settings');
     // Wait for form to load
-    await expect(page.locator('input[formControlName="email"]')).toBeVisible();
+    await expect(page.locator('[data-testid="input-email"]')).toBeVisible();
     // Try to submit
-    await page.click('button[type="submit"]');
+    await page.click('[data-testid="settings-submit"]');
     // Should show error, not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Form should still be usable
-    await expect(page.locator('input[formControlName="email"]')).toBeVisible();
+    await expect(page.locator('[data-testid="input-email"]')).toBeVisible();
   });
 
   test('should handle intermittent 500 errors gracefully', async ({ page }) => {
@@ -518,8 +521,8 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     });
     await page.goto('/');
     // App should still be functional after error
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('.banner')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="banner"]')).toBeVisible();
   });
 });
 
@@ -531,8 +534,8 @@ test.describe('Error Handling - Network Errors', () => {
     });
     await page.goto('/');
     // App should not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('.banner')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="banner"]')).toBeVisible();
   });
 
   test('should handle connection refused', async ({ page }) => {
@@ -541,8 +544,8 @@ test.describe('Error Handling - Network Errors', () => {
     });
     await page.goto('/');
     // App should not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('.banner')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="banner"]')).toBeVisible();
   });
 
   test('should show error message on settings form when network fails', async ({ page }) => {
@@ -575,14 +578,14 @@ test.describe('Error Handling - Network Errors', () => {
       localStorage.setItem('jwtToken', 'fake-token');
     });
     await page.goto('/settings');
-    await expect(page.locator('button:has-text("Update Settings")')).toBeVisible();
+    await expect(page.locator('[data-testid="settings-submit"]')).toBeVisible();
     // Submit the form
-    await page.click('button:has-text("Update Settings")');
+    await page.click('[data-testid="settings-submit"]');
     // Should show network error message
-    await expect(page.locator('.error-messages')).toBeVisible();
-    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toContainText('Unable to connect');
     // Form should still be usable
-    await expect(page.locator('button:has-text("Update Settings")')).toBeVisible();
+    await expect(page.locator('[data-testid="settings-submit"]')).toBeVisible();
   });
 
   test('should show error message on login form when network fails', async ({ page }) => {
@@ -590,13 +593,13 @@ test.describe('Error Handling - Network Errors', () => {
       route.abort('internetdisconnected');
     });
     await page.goto('/login');
-    await page.fill('input[formcontrolname="email"]', 'test@example.com');
-    await page.fill('input[formcontrolname="password"]', 'password123');
-    await page.click('button[type="submit"]');
-    await expect(page.locator('.error-messages')).toBeVisible();
-    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    await page.fill('[data-testid="input-email"]', 'test@example.com');
+    await page.fill('[data-testid="input-password"]', 'password123');
+    await page.click('[data-testid="auth-submit"]');
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toContainText('Unable to connect');
     // Form should still be usable
-    await expect(page.locator('button[type="submit"]')).toBeVisible();
+    await expect(page.locator('[data-testid="auth-submit"]')).toBeVisible();
   });
 
   test('should show error message on register form when network fails', async ({ page }) => {
@@ -604,14 +607,14 @@ test.describe('Error Handling - Network Errors', () => {
       route.abort('internetdisconnected');
     });
     await page.goto('/register');
-    await page.fill('input[formcontrolname="username"]', 'testuser');
-    await page.fill('input[formcontrolname="email"]', 'test@example.com');
-    await page.fill('input[formcontrolname="password"]', 'password123');
-    await page.click('button[type="submit"]');
-    await expect(page.locator('.error-messages')).toBeVisible();
-    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    await page.fill('[data-testid="input-username"]', 'testuser');
+    await page.fill('[data-testid="input-email"]', 'test@example.com');
+    await page.fill('[data-testid="input-password"]', 'password123');
+    await page.click('[data-testid="auth-submit"]');
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toContainText('Unable to connect');
     // Form should still be usable
-    await expect(page.locator('button[type="submit"]')).toBeVisible();
+    await expect(page.locator('[data-testid="auth-submit"]')).toBeVisible();
   });
 
   test('should show error message on create article form when network fails', async ({ page }) => {
@@ -632,14 +635,14 @@ test.describe('Error Handling - Network Errors', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('jwtToken', 'fake-token'));
     await page.goto('/editor');
-    await page.fill('input[formcontrolname="title"]', 'Test Article');
-    await page.fill('input[formcontrolname="description"]', 'Test description');
-    await page.fill('textarea[formcontrolname="body"]', 'Test body content');
-    await page.click('button:has-text("Publish Article")');
-    await expect(page.locator('.error-messages')).toBeVisible();
-    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    await page.fill('[data-testid="editor-title"]', 'Test Article');
+    await page.fill('[data-testid="editor-description"]', 'Test description');
+    await page.fill('[data-testid="editor-body"]', 'Test body content');
+    await page.click('[data-testid="editor-publish"]');
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toContainText('Unable to connect');
     // Form should still be usable
-    await expect(page.locator('button:has-text("Publish Article")')).toBeVisible();
+    await expect(page.locator('[data-testid="editor-publish"]')).toBeVisible();
   });
 
   test('should show error message on update article form when network fails', async ({ page }) => {
@@ -682,12 +685,12 @@ test.describe('Error Handling - Network Errors', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('jwtToken', 'fake-token'));
     await page.goto('/editor/test-article');
-    await expect(page.locator('input[formcontrolname="title"]')).toHaveValue('Test Article');
-    await page.click('button:has-text("Publish Article")');
-    await expect(page.locator('.error-messages')).toBeVisible();
-    await expect(page.locator('.error-messages')).toContainText('Unable to connect');
+    await expect(page.locator('[data-testid="editor-title"]')).toHaveValue('Test Article');
+    await page.click('[data-testid="editor-publish"]');
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toContainText('Unable to connect');
     // Form should still be usable
-    await expect(page.locator('button:has-text("Publish Article")')).toBeVisible();
+    await expect(page.locator('[data-testid="editor-publish"]')).toBeVisible();
   });
 
   test('should show error message when adding comment fails due to network', async ({ page }) => {
@@ -738,12 +741,12 @@ test.describe('Error Handling - Network Errors', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('jwtToken', 'fake-token'));
     await page.goto('/article/test-article');
-    await page.fill('textarea[placeholder="Write a comment..."]', 'Test comment');
-    await page.click('button:has-text("Post Comment")');
-    await expect(page.locator('.error-messages').first()).toBeVisible();
-    await expect(page.locator('.error-messages').first()).toContainText('Unable to connect');
+    await page.fill('[data-testid="comment-input"]', 'Test comment');
+    await page.click('[data-testid="post-comment"]');
+    await expect(page.locator('[data-testid="error-messages"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]').first()).toContainText('Unable to connect');
     // Article content should still be visible
-    await expect(page.locator('.article-content')).toBeVisible();
+    await expect(page.locator('[data-testid="article-content"]')).toBeVisible();
   });
 
   test('should handle network error when favoriting article', async ({ page }) => {
@@ -797,11 +800,11 @@ test.describe('Error Handling - Network Errors', () => {
     await page.evaluate(() => localStorage.setItem('jwtToken', 'fake-token'));
     await page.goto('/article/test-article');
     // Click favorite button (first one - there are 2 on the page)
-    await page.locator('button:has-text("Favorite Article")').first().click();
+    await page.locator('[data-testid="favorite-button"]').first().click();
     // App should not crash - button should still be visible
-    await expect(page.locator('button:has-text("Favorite Article")').first()).toBeVisible();
+    await expect(page.locator('[data-testid="favorite-button"]').first()).toBeVisible();
     // Article content should still be visible
-    await expect(page.locator('.article-content')).toBeVisible();
+    await expect(page.locator('[data-testid="article-content"]')).toBeVisible();
   });
 
   test('should handle network error when following user', async ({ page }) => {
@@ -845,11 +848,11 @@ test.describe('Error Handling - Network Errors', () => {
     await page.evaluate(() => localStorage.setItem('jwtToken', 'fake-token'));
     await page.goto('/profile/otheruser');
     // Click follow button
-    await page.click('button:has-text("Follow")');
+    await page.click('[data-testid="follow-button"]:has-text("Follow")');
     // App should not crash - button should still be visible
-    await expect(page.locator('button:has-text("Follow")')).toBeVisible();
+    await expect(page.locator('[data-testid="follow-button"]:has-text("Follow")')).toBeVisible();
     // Profile info should still be visible
-    await expect(page.locator('.user-info')).toBeVisible();
+    await expect(page.locator('[data-testid="user-info"]')).toBeVisible();
   });
 });
 
@@ -864,8 +867,8 @@ test.describe('Error Handling - Edge Cases', () => {
     });
     await page.goto('/');
     // App should not crash on malformed response
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('.banner')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="banner"]')).toBeVisible();
   });
 
   test('should handle empty response body', async ({ page }) => {
@@ -878,8 +881,8 @@ test.describe('Error Handling - Edge Cases', () => {
     });
     await page.goto('/');
     // App should handle empty response - banner and navbar should be visible
-    await expect(page.locator('nav.navbar')).toBeVisible();
-    await expect(page.locator('.banner')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
+    await expect(page.locator('[data-testid="banner"]')).toBeVisible();
   });
 
   test('should handle 404 for non-existent article', async ({ page }) => {
@@ -888,7 +891,7 @@ test.describe('Error Handling - Edge Cases', () => {
     });
     await page.goto('/article/non-existent-slug');
     // Should show appropriate message, not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Article page container should still render
     await expect(page.locator('.article-page')).toBeVisible();
   });
@@ -899,8 +902,8 @@ test.describe('Error Handling - Edge Cases', () => {
     });
     await page.goto('/profile/nonexistentuser');
     // Should show appropriate message, not crash
-    await expect(page.locator('nav.navbar')).toBeVisible();
+    await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Profile page container should still render
-    await expect(page.locator('.profile-page, .user-info')).toBeVisible();
+    await expect(page.locator('[data-testid="user-info"]')).toBeVisible();
   });
 });

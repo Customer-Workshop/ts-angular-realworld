@@ -12,6 +12,7 @@
                 formControlName="title"
                 type="text"
                 placeholder="Article Title"
+                data-testid="editor-title"
               />
             </fieldset>
 
@@ -21,6 +22,7 @@
                 formControlName="description"
                 type="text"
                 placeholder="What's this article about?"
+                data-testid="editor-description"
               />
             </fieldset>
 
@@ -30,6 +32,7 @@
                 formControlName="body"
                 rows="8"
                 placeholder="Write your article (in markdown)"
+                data-testid="editor-body"
               >
               </textarea>
             </fieldset>
@@ -41,6 +44,7 @@
                 placeholder="Enter tags"
                 [formControl]="tagField"
                 (keyup.enter)="addTag()"
+                data-testid="editor-tags"
               />
               <div class="tag-list">
                 @for (tag of tagList(); track tag) {
@@ -52,7 +56,12 @@
               </div>
             </fieldset>
 
-            <button class="btn btn-lg pull-xs-right btn-primary" type="button" (click)="submitForm()">
+            <button
+              class="btn btn-lg pull-xs-right btn-primary"
+              type="button"
+              (click)="submitForm()"
+              data-testid="editor-publish"
+            >
               Publish Article
             </button>
           </fieldset>

@@ -9,9 +9,9 @@ test.describe('Authentication', () => {
     // Should be redirected to home page
     await expect(page).toHaveURL('/');
     // Should see username in header
-    await expect(page.locator(`a[href="/profile/${user.username}"]`)).toBeVisible();
+    await expect(page.locator('[data-testid="nav-profile"]')).toBeVisible();
     // Should be able to access editor
-    await page.click('a[href="/editor"]');
+    await page.click('[data-testid="nav-new-article"]');
     await expect(page).toHaveURL('/editor');
   });
 
@@ -22,20 +22,20 @@ test.describe('Authentication', () => {
     // Logout
     await logout(page);
     // Should see Sign in link
-    await expect(page.locator('a[href="/login"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-in"]')).toBeVisible();
     // Login again
     await login(page, user.email, user.password);
     // Should be logged in
-    await expect(page.locator(`a[href="/profile/${user.username}"]`)).toBeVisible();
+    await expect(page.locator('[data-testid="nav-profile"]')).toBeVisible();
   });
 
   test('should show error for invalid login', async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[formControlName="email"]', 'nonexistent@example.com');
-    await page.fill('input[formControlName="password"]', 'wrongpassword');
-    await page.click('button[type="submit"]');
+    await page.fill('[data-testid="input-email"]', 'nonexistent@example.com');
+    await page.fill('[data-testid="input-password"]', 'wrongpassword');
+    await page.click('[data-testid="auth-submit"]');
     // Should show error message
-    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
   });
 
   test('should fail login with wrong password', async ({ page }) => {
@@ -46,11 +46,11 @@ test.describe('Authentication', () => {
     await logout(page);
     // Try to login with correct email but wrong password
     await page.goto('/login');
-    await page.fill('input[formControlName="email"]', user.email);
-    await page.fill('input[formControlName="password"]', 'wrongpassword123');
-    await page.click('button[type="submit"]');
+    await page.fill('[data-testid="input-email"]', user.email);
+    await page.fill('[data-testid="input-password"]', 'wrongpassword123');
+    await page.click('[data-testid="auth-submit"]');
     // Should show error message
-    await expect(page.locator('.error-messages')).toBeVisible();
+    await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
     // Should still be on login page (not redirected)
     await expect(page).toHaveURL('/login');
   });
@@ -59,13 +59,13 @@ test.describe('Authentication', () => {
     const user = generateUniqueUser();
     await register(page, user.username, user.email, user.password);
     // User should be logged in
-    await expect(page.locator(`a[href="/profile/${user.username}"]`)).toBeVisible();
+    await expect(page.locator('[data-testid="nav-profile"]')).toBeVisible();
     // Logout
     await logout(page);
     // Should see Sign in link (user is logged out)
-    await expect(page.locator('a[href="/login"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-in"]')).toBeVisible();
     // Should not see profile link
-    await expect(page.locator(`a[href="/profile/${user.username}"]`)).not.toBeVisible();
+    await expect(page.locator('[data-testid="nav-profile"]')).not.toBeVisible();
   });
 
   test('should prevent accessing editor when not logged in', async ({ page }) => {
@@ -80,7 +80,7 @@ test.describe('Authentication', () => {
     // Reload the page
     await page.reload();
     // Should still be logged in
-    await expect(page.locator(`a[href="/profile/${user.username}"]`)).toBeVisible();
+    await expect(page.locator('[data-testid="nav-profile"]')).toBeVisible();
   });
 
   test('should handle invalid token on page reload gracefully', async ({ page }) => {
@@ -92,8 +92,8 @@ test.describe('Authentication', () => {
     // Reload the page - this should NOT cause a blank screen
     await page.reload();
     // The app should still load and show the unauthenticated UI
-    await expect(page.locator('a[href="/login"]')).toBeVisible();
-    await expect(page.locator('a[href="/register"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-in"]')).toBeVisible();
+    await expect(page.locator('[data-testid="nav-sign-up"]')).toBeVisible();
     // The invalid token should be cleared (use debug interface)
     const token = await getToken(page);
     expect(token).toBeNull();

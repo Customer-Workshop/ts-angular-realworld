@@ -2,17 +2,17 @@ import { Page } from '@playwright/test';
 
 export async function register(page: Page, username: string, email: string, password: string) {
   await page.goto('/register', { waitUntil: 'load' });
-  await page.fill('input[formControlName="username"]', username);
-  await page.fill('input[formControlName="email"]', email);
-  await page.fill('input[formControlName="password"]', password);
+  await page.fill('[data-testid="input-username"]', username);
+  await page.fill('[data-testid="input-email"]', email);
+  await page.fill('[data-testid="input-password"]', password);
 
   // Wait for navigation to complete or error to appear
   try {
-    await Promise.all([page.waitForURL('/'), page.click('button[type="submit"]')]);
+    await Promise.all([page.waitForURL('/'), page.click('[data-testid="auth-submit"]')]);
   } catch (error) {
     // If navigation fails, check for errors
     const errorMsg = await page
-      .locator('.error-messages')
+      .locator('[data-testid="error-messages"]')
       .textContent()
       .catch(() => '');
     if (errorMsg) {
@@ -24,16 +24,16 @@ export async function register(page: Page, username: string, email: string, pass
 
 export async function login(page: Page, email: string, password: string) {
   await page.goto('/login', { waitUntil: 'load' });
-  await page.fill('input[formControlName="email"]', email);
-  await page.fill('input[formControlName="password"]', password);
+  await page.fill('[data-testid="input-email"]', email);
+  await page.fill('[data-testid="input-password"]', password);
 
   // Wait for navigation to complete or error to appear
   try {
-    await Promise.all([page.waitForURL('/'), page.click('button[type="submit"]')]);
+    await Promise.all([page.waitForURL('/'), page.click('[data-testid="auth-submit"]')]);
   } catch (error) {
     // If navigation fails, check for errors
     const errorMsg = await page
-      .locator('.error-messages')
+      .locator('[data-testid="error-messages"]')
       .textContent()
       .catch(() => '');
     if (errorMsg) {
@@ -44,8 +44,8 @@ export async function login(page: Page, email: string, password: string) {
 }
 
 export async function logout(page: Page) {
-  await page.click('a[href="/settings"]');
-  await Promise.all([page.waitForURL('/'), page.click('button:has-text("Or click here to logout")')]);
+  await page.click('[data-testid="nav-settings"]');
+  await Promise.all([page.waitForURL('/'), page.click('[data-testid="logout-button"]')]);
 }
 
 export function generateUniqueUser() {
