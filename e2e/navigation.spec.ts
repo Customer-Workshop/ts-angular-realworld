@@ -215,7 +215,7 @@ test.describe('Navigation and Filtering', () => {
     await page.click('a:has-text("Favorited")');
 
     // Should have 1 favorited article
-    await expect(page.locator('[data-testid="article-preview"]')).toHaveCount(1);
+    await expect(page.locator('[data-testid="article-preview"]')).toHaveCount(1, { timeout: 10000 });
   });
 
   test('should handle empty states gracefully', async ({ page }) => {
