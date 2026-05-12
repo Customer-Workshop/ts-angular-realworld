@@ -120,12 +120,12 @@ test.describe('Error Handling - 401 Unauthorized', () => {
     await setFakeAuthToken(page);
     await page.goto('/settings');
     // Wait for form to load
-    await expect(page.locator('[data-testid="input-email"]')).toBeVisible();
+    await expect(page.locator('[data-testid="settings-email"]')).toBeVisible();
     // Submit the form
     await page.click('[data-testid="settings-submit"]');
     // Should show error message, form should still be usable
     await expect(page.locator('[data-testid="error-messages"]')).toBeVisible();
-    await expect(page.locator('[data-testid="input-email"]')).toBeVisible();
+    await expect(page.locator('[data-testid="settings-email"]')).toBeVisible();
   });
 
   test('should handle 401 when posting a comment', async ({ page }) => {
@@ -432,7 +432,7 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     // Should show error state or fallback, not crash
     await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Profile container should exist (even if empty)
-    await expect(page.locator('[data-testid="user-info"]')).toBeVisible();
+    await expect(page.locator('[data-testid="profile-page"]')).toBeVisible();
   });
 
   test('should handle network error on user profile load', async ({ page }) => {
@@ -443,7 +443,7 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     // Should not crash
     await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Profile container should exist (even if empty)
-    await expect(page.locator('[data-testid="user-info"]')).toBeVisible();
+    await expect(page.locator('[data-testid="profile-page"]')).toBeVisible();
   });
 
   test('should handle 500 on article detail load', async ({ page }) => {
@@ -454,7 +454,7 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     // App should not crash
     await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Article page container should exist
-    await expect(page.locator('.article-page')).toBeVisible();
+    await expect(page.locator('[data-testid="article-page"]')).toBeVisible();
   });
 
   test('should handle network error on article detail load', async ({ page }) => {
@@ -465,7 +465,7 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     // App should not crash
     await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Article page container should exist
-    await expect(page.locator('.article-page')).toBeVisible();
+    await expect(page.locator('[data-testid="article-page"]')).toBeVisible();
   });
 
   test('should handle 500 when submitting settings', async ({ page }) => {
@@ -491,13 +491,13 @@ test.describe('Error Handling - 500 Internal Server Error', () => {
     await setFakeAuthToken(page);
     await page.goto('/settings');
     // Wait for form to load
-    await expect(page.locator('[data-testid="input-email"]')).toBeVisible();
+    await expect(page.locator('[data-testid="settings-email"]')).toBeVisible();
     // Try to submit
     await page.click('[data-testid="settings-submit"]');
     // Should show error, not crash
     await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Form should still be usable
-    await expect(page.locator('[data-testid="input-email"]')).toBeVisible();
+    await expect(page.locator('[data-testid="settings-email"]')).toBeVisible();
   });
 
   test('should handle intermittent 500 errors gracefully', async ({ page }) => {
@@ -893,7 +893,7 @@ test.describe('Error Handling - Edge Cases', () => {
     // Should show appropriate message, not crash
     await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Article page container should still render
-    await expect(page.locator('.article-page')).toBeVisible();
+    await expect(page.locator('[data-testid="article-page"]')).toBeVisible();
   });
 
   test('should handle 404 for non-existent profile', async ({ page }) => {
@@ -904,6 +904,6 @@ test.describe('Error Handling - Edge Cases', () => {
     // Should show appropriate message, not crash
     await expect(page.locator('[data-testid="navbar"]')).toBeVisible();
     // Profile page container should still render
-    await expect(page.locator('[data-testid="user-info"]')).toBeVisible();
+    await expect(page.locator('[data-testid="profile-page"]')).toBeVisible();
   });
 });

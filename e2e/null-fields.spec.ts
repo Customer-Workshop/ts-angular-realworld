@@ -42,7 +42,7 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     await register(page, user.username, user.email, user.password);
     const article = generateUniqueArticle();
     await createArticle(page, article);
-    const articleMetaImg = page.locator('[data-testid="article-content"] img').first();
+    const articleMetaImg = page.locator('[data-testid="article-meta-img"]').first();
     await expect(articleMetaImg).toBeVisible();
     const src = await articleMetaImg.getAttribute('src');
     expect(src).toContain('default-avatar.svg');
@@ -150,7 +150,7 @@ test.describe('Null/Empty Image and Bio Handling', () => {
     const articlePreview = page.locator('[data-testid="article-preview"]', { hasText: `Null avatar test ${uniqueId}` });
     await expect(articlePreview).toBeVisible();
     // The author avatar in the article preview should be the default
-    const authorImg = articlePreview.locator('img').first();
+    const authorImg = articlePreview.locator('[data-testid="article-meta-img"]').first();
     const src = await authorImg.getAttribute('src');
     expect(src).toContain('default-avatar.svg');
   });

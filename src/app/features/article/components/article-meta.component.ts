@@ -9,7 +9,7 @@ import { DefaultImagePipe } from '../../../shared/pipes/default-image.pipe';
   template: `
     <div class="article-meta">
       <a [routerLink]="['/profile', article.author.username]">
-        <img [src]="article.author.image | defaultImage" />
+        <img [src]="article.author.image | defaultImage" data-testid="article-meta-img" />
       </a>
 
       <div class="info">
